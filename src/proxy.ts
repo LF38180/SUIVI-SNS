@@ -10,6 +10,7 @@ export function proxy(req: NextRequest) {
   if (
     CHEMINS_PUBLICS.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
     pathname.startsWith('/api/auth') ||
+    pathname === '/api/health' ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
