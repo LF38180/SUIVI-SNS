@@ -15,13 +15,17 @@ export type MesureVue = {
   referent: string | null
   natureCout: string | null
   ordreGrandeur: string | null
+  echeanceCible: string | null // ISO yyyy-mm-dd ou null
 }
 
 export function ListeMesures({ mesures, referents }: { mesures: MesureVue[]; referents: string[] }) {
   const [axe, setAxe] = useState('')
   const [ref, setRef] = useState('')
   const [stat, setStat] = useState('')
+  const [ech, setEch] = useState('') // '', 'retard', 'avenir'
   const [q, setQ] = useState('')
+
+  const aujourdhui = new Date().toISOString().slice(0, 10)
 
   const filtrees = useMemo(
     () =>
@@ -29,13 +33,21 @@ export function ListeMesures({ mesures, referents }: { mesures: MesureVue[]; ref
         if (axe && m.categorie !== axe) return false
         if (ref && m.referent !== ref) return false
         if (stat && statutDe(m.avancementPublie).nom !== stat) return false
+        if (ech === 'retard') {
+          // en retard : échéance passée ET mesure non réalisée
+          if (!m.echeanceCible || m.echeanceCible >= aujourdhui || m.avancementPublie >= 100) return false
+        }
+        if (ech === 'avenir') {
+          // à venir : échéance future, non réalisée
+          if (!m.echeanceCible || m.echeanceCible < aujourdhui || m.avancementPublie >= 100) return false
+        }
         if (q) {
           const h = `${m.intitule} ${m.referent ?? ''} ${m.rubrique}`.toLowerCase()
           if (!h.includes(q.toLowerCase())) return false
         }
         return true
       }),
-    [mesures, axe, ref, stat, q],
+    [mesures, axe, ref, stat, ech, q, aujourdhui],
   )
 
   const axes = ['AXE_1', 'AXE_2', 'AXE_3', 'AXE_4']
@@ -72,6 +84,15 @@ export function ListeMesures({ mesures, referents }: { mesures: MesureVue[]; ref
           <option>Engagé</option>
           <option>En cours</option>
           <option>Réalisé</option>
+        </select>
+        <select
+          value={ech}
+          onChange={(e) => setEch(e.target.value)}
+          style={{ padding: '11px 12px', border: '1px solid #ECE5DF', borderRadius: 10, font: 'inherit' }}
+        >
+          <option value="">Toutes échéances</option>
+          <option value="retard">En retard</option>
+          <option value="avenir">À venir</option>
         </select>
       </div>
       <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 14 }}>

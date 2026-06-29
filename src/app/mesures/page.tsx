@@ -13,6 +13,7 @@ export default async function PageMesures() {
     referent: m.eluReferent?.nom ?? null,
     natureCout: m.natureCout,
     ordreGrandeur: m.ordreGrandeur,
+    echeanceCible: m.echeanceCible ? m.echeanceCible.toISOString().slice(0, 10) : null,
   }))
   const referents = [...new Set(vues.map((v) => v.referent).filter(Boolean) as string[])].sort()
   return (
