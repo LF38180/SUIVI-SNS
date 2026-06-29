@@ -48,6 +48,7 @@ model User {
   validations     Proposition[]      @relation("Validateur")
   journalEntrees  JournalEntree[]
   piecesJointes   PieceJointe[]
+  notifications   Notification[]
 }
 
 model Mesure {
@@ -77,6 +78,20 @@ model Mesure {
   piecesJointes  PieceJointe[]
   historique     Historique[]
   coReferents    MesureCoReferent[]
+}
+
+// Notifications in-app (cloche). Destinataire = un user. Générées par le système
+// (proposition créée → admins ; proposition validée/refusée → auteur ; etc.).
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  message     String
+  lien        String?
+  lue         Boolean  @default(false)
+  creeeLe     DateTime @default(now())
+
+  @@index([userId, lue])
 }
 
 // Co-référents d'une mesure (sujets transversaux) : N élus associés en plus

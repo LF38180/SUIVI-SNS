@@ -3,7 +3,11 @@ import { prisma } from '@/lib/db'
 export async function toutesLesMesures() {
   return prisma.mesure.findMany({
     orderBy: { ordre: 'asc' },
-    include: { eluReferent: true, adjointRattachement: true },
+    include: {
+      eluReferent: true,
+      adjointRattachement: true,
+      coReferents: { include: { user: true } },
+    },
   })
 }
 

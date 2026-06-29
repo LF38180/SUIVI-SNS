@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { lireSession } from '@/lib/session'
 import { peutProposer } from '@/lib/permissions'
+import { notifierAdmins } from '@/lib/notifications'
 
 export async function POST(req: NextRequest) {
   const session = await lireSession()
@@ -33,5 +34,13 @@ export async function POST(req: NextRequest) {
       },
     })
   }
+  // notifier les admins qu'une proposition est à valider
+  const mesure = await prisma.mesure.findUnique({ where: { id: Number(mesureId) }, select: { intitule: true } })
+  const auteur = await prisma.user.findUnique({ where: { id: session.userId }, select: { nom: true } })
+  await notifierAdmins(
+    `${auteur?.nom ?? 'Un élu'} propose ${av}% sur « ${mesure?.intitule ?? 'une mesure'} »`,
+    `/admin/validations`,
+  )
+
   return NextResponse.json({ ok: true, id: prop.id })
 }

@@ -7,6 +7,7 @@ import { NOMS_AXES } from '@/lib/axes'
 import { statutDe, STATUTS } from '@/lib/statut'
 import { CourbeEvolution, PointEvolution } from '@/components/CourbeEvolution'
 import { BoutonImpression } from '@/components/BoutonImpression'
+import Link from 'next/link'
 
 export default async function TableauDeBord() {
   const mesures = await toutesLesMesures()
@@ -59,7 +60,11 @@ export default async function TableauDeBord() {
             <h2>Avancement par axe</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {axes.map((a) => (
-                <div key={a.axe} style={{ border: '1px solid #ECE5DF', borderRadius: 14, padding: '14px 15px' }}>
+                <Link
+                  key={a.axe}
+                  href={`/mesures?axe=${a.axe}`}
+                  style={{ border: '1px solid #ECE5DF', borderRadius: 14, padding: '14px 15px', textDecoration: 'none', color: 'inherit', display: 'block' }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#EE6B3E', letterSpacing: '.5px' }}>
                       {a.axe.replace('_', ' ')}
@@ -71,7 +76,7 @@ export default async function TableauDeBord() {
                   <div style={{ fontSize: 11, color: '#6E6E73', marginTop: 7 }}>
                     {a.nb} mesures · {a.realisees} réalisée{a.realisees > 1 ? 's' : ''}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
