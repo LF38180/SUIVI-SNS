@@ -32,6 +32,14 @@ enum StatutProposition {
   REFUSEE
 }
 
+// Situation d'une mesure non encore réalisée (transparence du bilan, §crédibilité).
+enum Situation {
+  NORMALE // suit son cours
+  REPORTEE // décalée, échéance révisée
+  ADAPTEE // mise en œuvre différemment
+  ABANDONNEE // ne sera pas faite, avec motif
+}
+
 model User {
   id             Int     @id @default(autoincrement())
   nom            String
@@ -66,6 +74,8 @@ model Mesure {
   avancementPublie Int       @default(0)
   ordre            Int       @default(0)
   deletedAt        DateTime? // corbeille (soft-delete) — restaurable 30j
+  situation        Situation @default(NORMALE) // reporté / adapté / abandonné (transparence)
+  situationMotif   String?
 
   // visibilité champ par champ pour la vue publique (§8.4)
   coutPublic    Boolean @default(false)

@@ -31,6 +31,8 @@ export default async function EditionMesure({ params }: { params: Promise<{ id: 
     coReferentIds: mesure.coReferents.map((c) => c.userId),
     coutPublic: mesure.coutPublic,
     limitesPublic: mesure.limitesPublic,
+    situation: mesure.situation,
+    situationMotif: mesure.situationMotif ?? '',
   }
 
   return (

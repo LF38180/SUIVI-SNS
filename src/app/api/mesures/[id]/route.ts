@@ -22,6 +22,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (typeof body.ordreGrandeur === 'string') data.ordreGrandeur = body.ordreGrandeur
   if (typeof body.coutPublic === 'boolean') data.coutPublic = body.coutPublic
   if (typeof body.limitesPublic === 'boolean') data.limitesPublic = body.limitesPublic
+  if (['NORMALE', 'REPORTEE', 'ADAPTEE', 'ABANDONNEE'].includes(body.situation)) data.situation = body.situation
+  if (typeof body.situationMotif === 'string') data.situationMotif = body.situationMotif || null
   if ('eluReferentId' in body) data.eluReferentId = body.eluReferentId ? Number(body.eluReferentId) : null
   if ('adjointRattachementId' in body)
     data.adjointRattachementId = body.adjointRattachementId ? Number(body.adjointRattachementId) : null

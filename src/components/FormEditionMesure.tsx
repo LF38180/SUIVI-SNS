@@ -18,6 +18,8 @@ type MesureEdit = {
   coReferentIds: number[]
   coutPublic: boolean
   limitesPublic: boolean
+  situation: string
+  situationMotif: string
 }
 
 export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users: UserOpt[] }) {
@@ -58,6 +60,8 @@ export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users
         coReferentIds: m.coReferentIds,
         coutPublic: m.coutPublic,
         limitesPublic: m.limitesPublic,
+        situation: m.situation,
+        situationMotif: m.situationMotif,
       }),
     })
     setEnCours(false)
@@ -132,6 +136,22 @@ export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users
 
       <label style={label}>Points de vigilance / limites</label>
       <textarea style={{ ...input, minHeight: 70 }} value={m.limites} onChange={(e) => set('limites', e.target.value)} />
+
+      <label style={label}>Situation (transparence du bilan)</label>
+      <select style={input} value={m.situation} onChange={(e) => set('situation', e.target.value)}>
+        <option value="NORMALE">Suit son cours</option>
+        <option value="REPORTEE">Reportée (échéance révisée)</option>
+        <option value="ADAPTEE">Adaptée (mise en œuvre différemment)</option>
+        <option value="ABANDONNEE">Abandonnée (avec motif)</option>
+      </select>
+      {m.situation !== 'NORMALE' && (
+        <input
+          style={input}
+          placeholder="Motif (affiché publiquement, soyez transparent)"
+          value={m.situationMotif}
+          onChange={(e) => set('situationMotif', e.target.value)}
+        />
+      )}
 
       <div style={{ display: 'flex', gap: 18, marginTop: 14, fontSize: 13 }}>
         <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

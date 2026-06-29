@@ -57,6 +57,17 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
           </div>
           <Barre pourcent={mesure.avancementPublie} />
 
+          {mesure.situation !== 'NORMALE' && (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: '#FCE9E1', fontSize: 13, color: '#C0461F' }}>
+              <b>
+                {mesure.situation === 'REPORTEE' && 'Mesure reportée'}
+                {mesure.situation === 'ADAPTEE' && 'Mesure adaptée'}
+                {mesure.situation === 'ABANDONNEE' && 'Mesure abandonnée'}
+              </b>
+              {mesure.situationMotif && <span> — {mesure.situationMotif}</span>}
+            </div>
+          )}
+
           {/* Élus en charge */}
           <div style={{ marginTop: 16 }}>
             <div style={labelStyle}>En charge</div>
