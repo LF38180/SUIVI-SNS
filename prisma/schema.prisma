@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ELU
+}
+
+enum Categorie {
+  AXE_1
+  AXE_2
+  AXE_3
+  AXE_4
+  HORS_PROGRAMME
+}
+
+enum TypePiece {
+  PHOTO
+  DOCUMENT
+  LIEN
+}
+
+enum StatutProposition {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+}
+
+model User {
+  id             Int     @id @default(autoincrement())
+  nom            String
+  email          String  @unique
+  motDePasseHash String
+  role           Role    @default(ELU)
+  actif          Boolean @default(true)
+  fonction       String?
+
+  mesuresReferent Mesure[]        @relation("Referent")
+  mesuresAdjoint  Mesure[]        @relation("Adjoint")
+  propositions    Proposition[]   @relation("Auteur")
+  validations     Proposition[]   @relation("Validateur")
+  journalEntrees  JournalEntree[]
+  piecesJointes   PieceJointe[]
+}
+
+model Mesure {
+  id               Int       @id @default(autoincrement())
+  categorie        Categorie
+  rubrique         String
+  intitule         String
+  natureCout       String?
+  ordreGrandeur    String?
+  besoins          String?
+  limites          String?
+  echeanceCible    DateTime?
+  avancementPublie Int       @default(0)
+  ordre            Int       @default(0)
+
+  // visibilité champ par champ pour la vue publique (§8.4)
+  coutPublic    Boolean @default(false)
+  limitesPublic Boolean @default(false)
+
+  eluReferentId         Int?
+  eluReferent           User? @relation("Referent", fields: [eluReferentId], references: [id])
+  adjointRattachementId Int?
+  adjointRattachement   User? @relation("Adjoint", fields: [adjointRattachementId], references: [id])
+
+  propositions   Proposition[]
+  journalEntrees JournalEntree[]
+  piecesJointes  PieceJointe[]
+  historique     Historique[]
+}
+
+model Proposition {
+  id                Int               @id @default(autoincrement())
+  mesureId          Int
+  mesure            Mesure            @relation(fields: [mesureId], references: [id])
+  auteurId          Int
+  auteur            User              @relation("Auteur", fields: [auteurId], references: [id])
+  avancementPropose Int
+  commentaire       String?
+  echeanceProposee  DateTime?
+  statut            StatutProposition @default(EN_ATTENTE)
+  motifRefus        String?
+  valideeParId      Int?
+  valideePar        User?             @relation("Validateur", fields: [valideeParId], references: [id])
+  creeeLe           DateTime          @default(now())
+  traiteeLe         DateTime?
+}
+
+model JournalEntree {
+  id                Int      @id @default(autoincrement())
+  mesureId          Int
+  mesure            Mesure   @relation(fields: [mesureId], references: [id])
+  auteurId          Int
+  auteur            User     @relation(fields: [auteurId], references: [id])
+  date              DateTime @default(now())
+  commentaire       String
+  avancementAssocie Int?
+}
+
+model PieceJointe {
+  id           Int       @id @default(autoincrement())
+  mesureId     Int
+  mesure       Mesure    @relation(fields: [mesureId], references: [id])
+  type         TypePiece
+  url          String
+  legende      String?
+  ajouteeParId Int
+  ajouteePar   User      @relation(fields: [ajouteeParId], references: [id])
+  date         DateTime  @default(now())
+}
+
+// Append-only : aucun UPDATE/DELETE dans le code (inaltérabilité §8.5)
+model Historique {
+  id              Int      @id @default(autoincrement())
+  mesureId        Int
+  mesure          Mesure   @relation(fields: [mesureId], references: [id])
+  ancienPourcent  Int
+  nouveauPourcent Int
+  proposeParId    Int?
+  valideeParId    Int?
+  date            DateTime @default(now())
+}
