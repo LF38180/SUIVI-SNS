@@ -36,9 +36,6 @@ export default async function TableauDeBord() {
             marginTop: -34,
             position: 'relative',
             zIndex: 3,
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0,1.15fr) minmax(0,2fr)',
-            gap: 18,
           }}
           className="synth"
         >
@@ -58,7 +55,7 @@ export default async function TableauDeBord() {
           </div>
           <div className="panel">
             <h2>Avancement par axe</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="axes-grid">
               {axes.map((a) => (
                 <Link
                   key={a.axe}

@@ -7,8 +7,23 @@ export async function toutesLesMesures() {
       eluReferent: true,
       adjointRattachement: true,
       coReferents: { include: { user: true } },
+      historique: { orderBy: { date: 'desc' }, take: 1 },
     },
   })
+}
+
+// Formate une date relative simple en français ("il y a 3 jours", "aujourd'hui").
+export function depuis(date: Date | null | undefined): string | null {
+  if (!date) return null
+  const jours = Math.floor((Date.now() - date.getTime()) / 86400000)
+  if (jours <= 0) return "aujourd'hui"
+  if (jours === 1) return 'hier'
+  if (jours < 31) return `il y a ${jours} jours`
+  const mois = Math.floor(jours / 30)
+  if (mois === 1) return 'il y a 1 mois'
+  if (mois < 12) return `il y a ${mois} mois`
+  const ans = Math.floor(jours / 365)
+  return ans === 1 ? 'il y a 1 an' : `il y a ${ans} ans`
 }
 
 export function moyenne(valeurs: number[]): number {

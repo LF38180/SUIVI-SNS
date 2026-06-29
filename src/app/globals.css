@@ -13,6 +13,9 @@
   --green: #3a8540;
   --amber: #c98a1a;
   --greyd: #9a9aa0;
+  /* Orange accessible pour le TEXTE/liens (contraste >= 4.5:1 sur blanc).
+     L'orange vif --orange reste réservé aux aplats et remplissages de jauge. */
+  --orange-texte: #c0461f;
 }
 
 * {
@@ -86,6 +89,46 @@ a {
   padding: 3px 10px;
   border-radius: 20px;
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Navigation responsive : liens en ligne en bureau, menu hamburger en mobile */
+@media (max-width: 760px) {
+  .nav-burger {
+    display: inline-block !important;
+  }
+  .nav-liens-desktop {
+    display: none !important;
+  }
+  .nav-compte {
+    display: none !important;
+  }
+  .nav-menu-mobile {
+    display: flex !important;
+  }
+}
+
+/* Synthèse du tableau de bord : 2 colonnes en bureau, 1 colonne en mobile */
+.synth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 2fr);
+  gap: 18px;
+}
+.axes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 760px) {
+  .synth {
+    grid-template-columns: 1fr;
+    margin-top: 18px !important;
+  }
+  .axes-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chip {

@@ -1,4 +1,4 @@
-import { toutesLesMesures } from '@/lib/requetes'
+import { toutesLesMesures, depuis } from '@/lib/requetes'
 import { EnTete } from '@/components/EnTete'
 import { ListeMesures, MesureVue } from '@/components/ListeMesures'
 
@@ -20,6 +20,7 @@ export default async function PageMesures({ searchParams }: { searchParams: Prom
     natureCout: m.natureCout,
     ordreGrandeur: m.ordreGrandeur,
     echeanceCible: m.echeanceCible ? m.echeanceCible.toISOString().slice(0, 10) : null,
+    majDepuis: depuis(m.historique[0]?.date ?? null),
   }))
   const referents = [...new Set(vues.map((v) => v.referent).filter(Boolean) as string[])].sort()
   const axeInitial = ['AXE_1', 'AXE_2', 'AXE_3', 'AXE_4', 'HORS_PROGRAMME'].includes(axe ?? '') ? axe! : ''

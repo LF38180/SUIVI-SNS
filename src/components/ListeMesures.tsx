@@ -17,6 +17,7 @@ export type MesureVue = {
   natureCout: string | null
   ordreGrandeur: string | null
   echeanceCible: string | null // ISO yyyy-mm-dd ou null
+  majDepuis: string | null // ex "il y a 3 jours", null si jamais validé
 }
 
 const ORDRE_AXES = ['AXE_1', 'AXE_2', 'AXE_3', 'AXE_4', 'HORS_PROGRAMME']
@@ -144,6 +145,9 @@ export function ListeMesures({
                               </span>
                             </div>
                             <Barre pourcent={m.avancementPublie} />
+                            {m.majDepuis && (
+                              <div style={{ fontSize: 11, color: '#9A9AA0', marginTop: 6 }}>Mis à jour {m.majDepuis}</div>
+                            )}
                           </div>
                         </Link>
                       )
