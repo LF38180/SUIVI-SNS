@@ -16,8 +16,12 @@ export default function Connexion() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, motDePasse }),
     })
-    if (res.ok) router.push('/')
-    else setErreur((await res.json()).erreur ?? 'Erreur')
+    if (res.ok) {
+      const data = await res.json()
+      router.push(data.role === 'ADMIN' ? '/admin' : '/mes-mesures')
+    } else {
+      setErreur((await res.json()).erreur ?? 'Erreur')
+    }
   }
 
   return (

@@ -11,6 +11,7 @@ export async function Nav() {
 
   const liens: LienNav[] = []
   if (estAdmin) liens.push({ href: '/admin', label: 'Espace admin', accent: true })
+  if (!estAdmin) liens.push({ href: '/mes-mesures', label: 'Mes mesures', accent: true })
   liens.push({ href: '/', label: 'Tableau de bord' })
   liens.push({ href: '/mesures', label: 'Engagements' })
   liens.push({ href: '/par-elu', label: 'Par élu' })
