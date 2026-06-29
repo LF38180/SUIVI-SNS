@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifierToken } from '@/lib/session'
 
-const CHEMINS_PUBLICS = ['/connexion', '/public']
+const CHEMINS_PUBLICS = ['/connexion', '/public', '/mentions-legales']
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl

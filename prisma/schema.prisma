@@ -83,6 +83,12 @@ model Mesure {
   coReferents    MesureCoReferent[]
 }
 
+// Paramètres globaux de l'application (réglages admin clé/valeur).
+model Parametre {
+  cle    String @id
+  valeur String
+}
+
 // Journal d'audit : trace les actions admin sensibles (qui, quoi, quand).
 model AuditLog {
   id        Int      @id @default(autoincrement())
