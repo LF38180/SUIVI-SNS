@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma'
 import { hashMotDePasse } from '../src/lib/auth'

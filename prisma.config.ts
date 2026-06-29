@@ -1,15 +1,14 @@
-import 'dotenv/config'
 import { defineConfig } from 'prisma/config'
 
+// Pas de `import 'dotenv/config'` ici : en production (Railway) les variables
+// d'environnement sont déjà injectées, et dotenv n'est pas installé en mode
+// --omit=dev. En local, Next et tsx chargent .env eux-mêmes.
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     seed: 'tsx prisma/seed.ts',
   },
   datasource: {
-    // Lecture directe (pas env() qui lève si absent) : `prisma generate` n'a pas
-    // besoin de l'URL réelle. `migrate deploy` et le runtime, eux, l'auront via
-    // les variables d'environnement Railway.
     url: process.env.DATABASE_URL ?? '',
   },
 })

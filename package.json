@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start -H 0.0.0.0",
+    "start:prod": "node scripts/boot.mjs",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx --env-file=.env prisma/seed.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -20,8 +21,10 @@
     "bcryptjs": "^3.0.3",
     "next": "16.2.9",
     "pg": "^8.22.0",
+    "prisma": "^7.8.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "tsx": "^4.22.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -29,11 +32,8 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "prisma": "^7.8.0",
-    "tsx": "^4.22.4",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }
