@@ -4,6 +4,7 @@ import { EnTete } from '@/components/EnTete'
 import { Barre } from '@/components/Barre'
 import { BadgeStatut } from '@/components/BadgeStatut'
 import { FormProposition } from '@/components/FormProposition'
+import { FormPieceJointe } from '@/components/FormPieceJointe'
 import { lireSession } from '@/lib/session'
 import { peutProposer } from '@/lib/permissions'
 
@@ -16,6 +17,7 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
       adjointRattachement: true,
       coReferents: { include: { user: true } },
       journalEntrees: { include: { auteur: true }, orderBy: { date: 'desc' } },
+      piecesJointes: { include: { ajouteePar: true }, orderBy: { date: 'desc' } },
       historique: { orderBy: { date: 'desc' } },
       propositions: {
         where: { statut: 'EN_ATTENTE' },
@@ -136,6 +138,38 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
         {session && peutProposer(session.role) && (
           <FormProposition mesureId={mesure.id} avancementActuel={mesure.avancementPublie} />
         )}
+
+        {/* Pièces jointes */}
+        <div className="panel" style={{ marginTop: 18 }}>
+          <h2>Pièces jointes</h2>
+          {mesure.piecesJointes.length === 0 && (
+            <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune pièce jointe.</div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
+            {mesure.piecesJointes.map((p) => (
+              <div key={p.id} style={{ width: 150, fontSize: 12 }}>
+                {p.type === 'PHOTO' && p.contenu && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.contenu} alt={p.legende ?? 'photo'} style={{ width: '100%', borderRadius: 8, border: '1px solid #ECE5DF' }} />
+                )}
+                {p.type === 'DOCUMENT' && p.contenu && (
+                  <a href={p.contenu} download={p.nomFichier ?? 'document'} style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#EE6B3E', fontWeight: 600 }}>
+                    📄 {p.nomFichier ?? 'Document'}
+                  </a>
+                )}
+                {p.type === 'LIEN' && p.url && (
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#EE6B3E', fontWeight: 600, wordBreak: 'break-all' }}>
+                    🔗 {p.legende || 'Lien'}
+                  </a>
+                )}
+                {p.legende && <div style={{ color: '#6E6E73', marginTop: 4 }}>{p.legende}</div>}
+                <div style={{ color: '#9A9AA0', fontSize: 11 }}>{p.ajouteePar.nom}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {session && peutProposer(session.role) && <FormPieceJointe mesureId={mesure.id} />}
 
         {/* Journal de bord */}
         <div className="panel" style={{ marginTop: 18 }}>

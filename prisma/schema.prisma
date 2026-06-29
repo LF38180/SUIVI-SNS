@@ -123,7 +123,10 @@ model PieceJointe {
   mesureId     Int
   mesure       Mesure    @relation(fields: [mesureId], references: [id])
   type         TypePiece
-  url          String
+  url          String?   // pour les LIENS (ou null si fichier stocké en base)
+  contenu      String?   // data URL base64 du fichier (PHOTO/DOCUMENT), stocké en base
+  nomFichier   String?
+  mimeType     String?
   legende      String?
   ajouteeParId Int
   ajouteePar   User      @relation(fields: [ajouteeParId], references: [id])
