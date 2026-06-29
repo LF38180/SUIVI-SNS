@@ -67,7 +67,10 @@ export async function Nav() {
           Comptes
         </Link>
       )}
-      <form action="/api/auth/logout" method="post" style={{ marginLeft: 'auto' }}>
+      <Link href="/compte" style={{ ...lien, marginLeft: 'auto' }}>
+        Mon compte
+      </Link>
+      <form action="/api/auth/logout" method="post">
         <button type="submit" style={{ background: 'none', border: 'none', color: '#6E6E73', cursor: 'pointer', font: 'inherit' }}>
           Déconnexion
         </button>
