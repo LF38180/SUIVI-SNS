@@ -24,6 +24,11 @@ export async function Nav() {
         background: '#fff',
       }}
     >
+      {estAdmin && (
+        <Link href="/admin" style={{ ...lien, fontWeight: 700, color: '#EE6B3E' }}>
+          Espace admin
+        </Link>
+      )}
       <Link href="/" style={lien}>
         Tableau de bord
       </Link>

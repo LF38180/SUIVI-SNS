@@ -1,0 +1,122 @@
+import { prisma } from '@/lib/db'
+import { lireSession } from '@/lib/session'
+import { peutValider } from '@/lib/permissions'
+import { redirect } from 'next/navigation'
+import { EnTete } from '@/components/EnTete'
+import { moyenne } from '@/lib/requetes'
+import Link from 'next/link'
+
+export default async function AccueilAdmin() {
+  const session = await lireSession()
+  if (!session || !peutValider(session.role)) redirect('/')
+
+  const [nbAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
+    prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
+    prisma.mesure.count(),
+    prisma.user.count({ where: { actif: true } }),
+    prisma.proposition.count({ where: { statut: 'VALIDEE' } }),
+    prisma.mesure.findMany({ select: { avancementPublie: true } }),
+    prisma.proposition.findMany({
+      where: { statut: 'EN_ATTENTE' },
+      include: { mesure: true, auteur: true },
+      orderBy: { creeeLe: 'desc' },
+      take: 5,
+    }),
+  ])
+  const global = moyenne(mesures.map((m) => m.avancementPublie))
+
+  const carte = {
+    background: '#fff',
+    border: '1px solid #ECE5DF',
+    borderRadius: 14,
+    padding: '18px 20px',
+    textDecoration: 'none',
+    color: 'inherit' as const,
+    display: 'block',
+  }
+  const grosNombre = { fontSize: 30, fontWeight: 800, color: '#EE6B3E', lineHeight: 1 }
+  const sousTexte = { fontSize: 12, color: '#6E6E73', marginTop: 4 }
+
+  return (
+    <>
+      <EnTete titre="Espace administrateur" sousTitre="Piloter, valider, gérer le suivi du programme." />
+      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 22px 80px' }}>
+        {/* Indicateurs clés */}
+        <section
+          style={{
+            marginTop: -34,
+            position: 'relative',
+            zIndex: 3,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))',
+            gap: 16,
+          }}
+        >
+          <Link href="/admin/validations" style={{ ...carte, borderColor: nbAttente > 0 ? '#EE6B3E' : '#ECE5DF' }}>
+            <div style={grosNombre}>{nbAttente}</div>
+            <div style={sousTexte}>proposition{nbAttente > 1 ? 's' : ''} à valider {nbAttente > 0 ? '→' : ''}</div>
+          </Link>
+          <div style={carte}>
+            <div style={grosNombre}>{global}%</div>
+            <div style={sousTexte}>avancement global du programme</div>
+          </div>
+          <div style={carte}>
+            <div style={grosNombre}>{nbMesures}</div>
+            <div style={sousTexte}>mesures suivies</div>
+          </div>
+          <div style={carte}>
+            <div style={grosNombre}>{nbValidees}</div>
+            <div style={sousTexte}>validations effectuées</div>
+          </div>
+        </section>
+
+        {/* File de validation (aperçu) */}
+        <div className="panel" style={{ marginTop: 24 }}>
+          <h2>Dernières propositions à valider</h2>
+          {dernieresProps.length === 0 && (
+            <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune proposition en attente. 🎉</div>
+          )}
+          {dernieresProps.map((p) => (
+            <Link
+              key={p.id}
+              href="/admin/validations"
+              style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+            >
+              <div style={{ borderBottom: '1px solid #ECE5DF', padding: '10px 0', fontSize: 13 }}>
+                <b>{p.mesure.intitule}</b>
+                <div style={{ color: '#6E6E73' }}>
+                  {p.auteur.nom} propose {p.mesure.avancementPublie}% → <b style={{ color: '#EE6B3E' }}>{p.avancementPropose}%</b>
+                </div>
+              </div>
+            </Link>
+          ))}
+          {nbAttente > 0 && (
+            <Link href="/admin/validations" style={{ display: 'inline-block', marginTop: 12, color: '#EE6B3E', fontWeight: 600, fontSize: 13 }}>
+              Voir toutes les propositions ({nbAttente}) →
+            </Link>
+          )}
+        </div>
+
+        {/* Raccourcis */}
+        <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+          <Link href="/admin/mesures" style={carte}>
+            <b>Gérer les mesures</b>
+            <div style={sousTexte}>Référents, co-référents, besoins, limites, échéances, visibilité publique.</div>
+          </Link>
+          <Link href="/admin/comptes" style={carte}>
+            <b>Gérer les comptes</b>
+            <div style={sousTexte}>{nbComptes} comptes actifs. Créer, activer/désactiver les élus.</div>
+          </Link>
+          <Link href="/" style={carte}>
+            <b>Tableau de bord</b>
+            <div style={sousTexte}>Synthèse, jauges par axe, courbe d’évolution, exports.</div>
+          </Link>
+          <Link href="/public" style={carte}>
+            <b>Vue publique</b>
+            <div style={sousTexte}>Ce que voient les habitants (données publiées uniquement).</div>
+          </Link>
+        </div>
+      </div>
+    </>
+  )
+}
