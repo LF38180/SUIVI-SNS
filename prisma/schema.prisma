@@ -41,10 +41,11 @@ model User {
   actif          Boolean @default(true)
   fonction       String?
 
-  mesuresReferent Mesure[]        @relation("Referent")
-  mesuresAdjoint  Mesure[]        @relation("Adjoint")
-  propositions    Proposition[]   @relation("Auteur")
-  validations     Proposition[]   @relation("Validateur")
+  mesuresReferent Mesure[]           @relation("Referent")
+  mesuresAdjoint  Mesure[]           @relation("Adjoint")
+  coReferences    MesureCoReferent[]
+  propositions    Proposition[]      @relation("Auteur")
+  validations     Proposition[]      @relation("Validateur")
   journalEntrees  JournalEntree[]
   piecesJointes   PieceJointe[]
 }
@@ -75,6 +76,18 @@ model Mesure {
   journalEntrees JournalEntree[]
   piecesJointes  PieceJointe[]
   historique     Historique[]
+  coReferents    MesureCoReferent[]
+}
+
+// Co-référents d'une mesure (sujets transversaux) : N élus associés en plus
+// du référent principal (eluReferentId) et de l'adjoint de rattachement.
+model MesureCoReferent {
+  mesureId Int
+  mesure   Mesure @relation(fields: [mesureId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@id([mesureId, userId])
 }
 
 model Proposition {
