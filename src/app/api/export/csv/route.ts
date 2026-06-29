@@ -1,0 +1,40 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
+import { lireSession } from '@/lib/session'
+import { NOMS_AXES } from '@/lib/axes'
+import { statutDe } from '@/lib/statut'
+
+function champ(v: unknown): string {
+  const s = String(v ?? '')
+  return `"${s.replace(/"/g, '""')}"`
+}
+
+export async function GET() {
+  const session = await lireSession()
+  if (!session) return NextResponse.json({ erreur: 'Non autorisé' }, { status: 401 })
+
+  const mesures = await prisma.mesure.findMany({ orderBy: { ordre: 'asc' }, include: { eluReferent: true } })
+  const entete = ['Axe', 'Rubrique', 'Intitulé', 'Référent', 'Coût', 'Ordre de grandeur', 'Avancement', 'Statut']
+  const lignes = mesures.map((m) =>
+    [
+      NOMS_AXES[m.categorie],
+      m.rubrique,
+      m.intitule,
+      m.eluReferent?.nom ?? '',
+      m.natureCout ?? '',
+      m.ordreGrandeur ?? '',
+      `${m.avancementPublie}%`,
+      statutDe(m.avancementPublie).nom,
+    ]
+      .map(champ)
+      .join(','),
+  )
+  // BOM UTF-8 pour qu'Excel affiche correctement les accents
+  const csv = '﻿' + [entete.map(champ).join(','), ...lignes].join('\n')
+  return new NextResponse(csv, {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="suivi-sns.csv"',
+    },
+  })
+}
