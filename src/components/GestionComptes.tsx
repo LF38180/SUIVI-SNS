@@ -38,6 +38,22 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
     if (res.ok) router.refresh()
   }
 
+  async function supprimerRgpd(id: number, nom: string) {
+    if (
+      !confirm(
+        `Supprimer le compte de ${nom} (élu sortant) ?\n\nSes identifiants seront effacés (RGPD). Ses contributions resteront sous « Ancien élu ». Action irréversible.`,
+      )
+    )
+      return
+    const res = await fetch('/api/comptes', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (res.ok) router.refresh()
+    else alert((await res.json()).erreur ?? 'Erreur')
+  }
+
   const input = { padding: 10, border: '1px solid #ECE5DF', borderRadius: 8, font: 'inherit' as const }
 
   return (
@@ -78,6 +94,9 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
             <span style={{ fontWeight: 600 }}>{c.role}</span>
             <button onClick={() => basculer(c.id, c.actif)} className="btn">
               {c.actif ? 'Désactiver' : 'Activer'}
+            </button>
+            <button onClick={() => supprimerRgpd(c.id, c.nom)} className="btn" style={{ color: '#C0461F', borderColor: '#C0461F' }}>
+              Supprimer (RGPD)
             </button>
           </div>
         ))}

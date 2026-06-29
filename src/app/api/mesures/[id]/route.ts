@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { lireSession } from '@/lib/session'
 import { peutGererMesures } from '@/lib/permissions'
+import { audit } from '@/lib/audit'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await lireSession()
@@ -47,6 +48,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         })
       }
     }
+  })
+
+  const mesure = await prisma.mesure.findUnique({ where: { id: mesureId }, select: { intitule: true } })
+  const acteur = await prisma.user.findUnique({ where: { id: session.userId }, select: { nom: true } })
+  await audit({
+    auteurId: session.userId,
+    auteurNom: acteur?.nom ?? 'Admin',
+    action: 'mesure.edition',
+    cible: `Mesure #${mesureId} — ${mesure?.intitule ?? ''}`,
   })
 
   return NextResponse.json({ ok: true })

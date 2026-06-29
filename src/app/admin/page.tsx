@@ -3,7 +3,8 @@ import { lireSession } from '@/lib/session'
 import { peutValider } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
 import { EnTete } from '@/components/EnTete'
-import { moyenne } from '@/lib/requetes'
+import { moyenne, mesuresASurveiller } from '@/lib/requetes'
+import { BoutonRelance } from '@/components/BoutonRelance'
 import Link from 'next/link'
 
 export default async function AccueilAdmin() {
@@ -24,6 +25,7 @@ export default async function AccueilAdmin() {
     }),
   ])
   const global = moyenne(mesures.map((m) => m.avancementPublie))
+  const surveiller = await mesuresASurveiller()
 
   const carte = {
     background: '#fff',
@@ -97,6 +99,31 @@ export default async function AccueilAdmin() {
           )}
         </div>
 
+        {/* À surveiller : mesures en retard ou dormantes, groupées par référent */}
+        <div className="panel" style={{ marginTop: 24 }}>
+          <h2>À surveiller</h2>
+          {surveiller.length === 0 && (
+            <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune mesure en retard ou dormante. 🎉</div>
+          )}
+          {surveiller.map(([referent, items]) => (
+            <div key={referent} style={{ borderBottom: '1px solid #ECE5DF', padding: '10px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <b style={{ fontSize: 14 }}>{referent}</b>
+                <BoutonRelance referent={referent} nbMesures={items.length} />
+              </div>
+              {items.map(({ m, enRetard, dormante }) => (
+                <Link key={m.id} href={`/mesures/${m.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ fontSize: 13, padding: '4px 0', color: '#6E6E73' }}>
+                    {m.intitule}
+                    {enRetard && <span style={{ marginLeft: 8, color: '#C0461F', fontWeight: 600 }}>⚠ en retard</span>}
+                    {dormante && <span style={{ marginLeft: 8, color: '#8A5E0F' }}>· sans MAJ depuis 90 j+</span>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
+
         {/* Raccourcis */}
         <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
           <Link href="/admin/mesures" style={carte}>
@@ -114,6 +141,10 @@ export default async function AccueilAdmin() {
           <Link href="/public" style={carte}>
             <b>Vue publique</b>
             <div style={sousTexte}>Ce que voient les habitants (données publiées uniquement).</div>
+          </Link>
+          <Link href="/admin/audit" style={carte}>
+            <b>Journal d’audit</b>
+            <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
           </Link>
         </div>
       </div>

@@ -21,6 +21,7 @@ export default async function PageValidations() {
     ancien: p.mesure.avancementPublie,
     propose: p.avancementPropose,
     commentaire: p.commentaire,
+    depuisJours: Math.max(0, Math.floor((Date.now() - p.creeeLe.getTime()) / 86400000)),
   }))
 
   return (

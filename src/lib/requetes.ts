@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 
 export async function toutesLesMesures() {
   return prisma.mesure.findMany({
+    where: { deletedAt: null },
     orderBy: { ordre: 'asc' },
     include: {
       eluReferent: true,
@@ -10,6 +11,39 @@ export async function toutesLesMesures() {
       historique: { orderBy: { date: 'desc' }, take: 1 },
     },
   })
+}
+
+// Mesures "à surveiller" pour l'admin : en retard (échéance dépassée, non réalisée)
+// ou dormantes (aucune validation depuis 90 jours). Groupées par référent.
+export async function mesuresASurveiller() {
+  const mesures = await prisma.mesure.findMany({
+    where: { deletedAt: null },
+    include: { eluReferent: true, historique: { orderBy: { date: 'desc' }, take: 1 } },
+  })
+  const now = Date.now()
+  const seuilDormance = 90 * 86400000
+  const aujourdhui = new Date().toISOString().slice(0, 10)
+
+  const items = mesures
+    .map((m) => {
+      const derniere = m.historique[0]?.date ?? null
+      const enRetard =
+        m.echeanceCible != null &&
+        m.echeanceCible.toISOString().slice(0, 10) < aujourdhui &&
+        m.avancementPublie < 100
+      const dormante = m.avancementPublie < 100 && (!derniere || now - derniere.getTime() > seuilDormance)
+      return { m, enRetard, dormante }
+    })
+    .filter((x) => x.enRetard || x.dormante)
+
+  // grouper par référent
+  const parReferent = new Map<string, typeof items>()
+  for (const it of items) {
+    const nom = it.m.eluReferent?.nom ?? 'Sans référent'
+    if (!parReferent.has(nom)) parReferent.set(nom, [])
+    parReferent.get(nom)!.push(it)
+  }
+  return [...parReferent.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 }
 
 // Formate une date relative simple en français ("il y a 3 jours", "aujourd'hui").

@@ -40,6 +40,8 @@ model User {
   role           Role    @default(ELU)
   actif          Boolean @default(true)
   fonction       String?
+  deletedAt      DateTime? // corbeille (soft-delete) — restaurable
+  anonymiseLe    DateTime? // RGPD : compte d'un élu sortant anonymisé
 
   mesuresReferent Mesure[]           @relation("Referent")
   mesuresAdjoint  Mesure[]           @relation("Adjoint")
@@ -63,6 +65,7 @@ model Mesure {
   echeanceCible    DateTime?
   avancementPublie Int       @default(0)
   ordre            Int       @default(0)
+  deletedAt        DateTime? // corbeille (soft-delete) — restaurable 30j
 
   // visibilité champ par champ pour la vue publique (§8.4)
   coutPublic    Boolean @default(false)
@@ -78,6 +81,19 @@ model Mesure {
   piecesJointes  PieceJointe[]
   historique     Historique[]
   coReferents    MesureCoReferent[]
+}
+
+// Journal d'audit : trace les actions admin sensibles (qui, quoi, quand).
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  auteurId  Int?
+  auteurNom String   // dénormalisé : reste lisible même si le compte est anonymisé
+  action    String   // ex "mesure.edition", "compte.desactivation", "mesure.suppression"
+  cible     String?  // ex "Mesure #12", "Compte Jean Dupont"
+  details   String?
+  date      DateTime @default(now())
+
+  @@index([date])
 }
 
 // Notifications in-app (cloche). Destinataire = un user. Générées par le système
