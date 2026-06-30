@@ -1,9 +1,23 @@
 # Notice de reprise & registre des accès (IMPORTANT)
 
 > Ce document garantit que l'outil **survit même si une personne devient indisponible**.
-> Il doit être détenu par **au moins 2 personnes de confiance** (Loïck + Julie).
-> ⚠️ Ne pas mettre les mots de passe en clair ICI dans le repo. Les mettre dans un
-> **gestionnaire de mots de passe partagé** (Bitwarden gratuit, ou coffre équivalent).
+> ⚠️ Ne pas mettre les mots de passe en clair ICI dans le repo.
+
+## ⏳ À FAIRE (non encore réglé) — dépositaire des accès
+
+État au 30/06/2026 : les sauvegardes externes quotidiennes fonctionnent (Backblaze).
+**Mais les accès (GitHub, Railway, Backblaze, SESSION_SECRET, BACKUP_PASSPHRASE) ne sont
+détenus que par Loïck.** Si Loïck devient durablement indisponible, les données seraient
+irrécupérables. À régler quand l'outil sera lancé — sans exiger de compétence technique du
+dépositaire :
+- **Option simple :** écrire tous les accès sur papier, enveloppe scellée, rangée en lieu sûr
+  (coffre / proche de confiance). Le dépositaire n'a rien à comprendre : juste à remettre
+  l'enveloppe à un développeur le jour venu.
+- **Option numérique :** gestionnaire de mots de passe (Bitwarden) avec « accès d'urgence »
+  délégué à un proche.
+
+Le savoir-faire de reprise n'a PAS besoin d'être chez le dépositaire : n'importe quel
+développeur reprend avec la présente notice (stack standard Next.js + PostgreSQL).
 
 ---
 
