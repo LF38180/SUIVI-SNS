@@ -38,11 +38,12 @@ export async function POST(req: NextRequest) {
       data: {
         mesureId: Number(mesureId),
         type,
-        contenu,
         nomFichier: body.nomFichier ? String(body.nomFichier) : null,
         mimeType: body.mimeType ? String(body.mimeType) : null,
         legende: legende ?? null,
         ajouteeParId: session.userId,
+        // contenu binaire isolé dans la table blob
+        blob: { create: { contenu } },
       },
     })
     return NextResponse.json({ ok: true, id: piece.id })

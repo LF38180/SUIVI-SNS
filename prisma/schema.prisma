@@ -177,13 +177,26 @@ model PieceJointe {
   mesure       Mesure    @relation(fields: [mesureId], references: [id])
   type         TypePiece
   url          String?   // pour les LIENS (ou null si fichier stocké en base)
-  contenu      String?   // data URL base64 du fichier (PHOTO/DOCUMENT), stocké en base
   nomFichier   String?
   mimeType     String?
   legende      String?
   ajouteeParId Int
   ajouteePar   User      @relation(fields: [ajouteeParId], references: [id])
   date         DateTime  @default(now())
+
+  // Le contenu binaire lourd (base64) vit dans une table séparée : les requêtes
+  // courantes (liste, fiche) ne le chargent JAMAIS. Sauvegardes plus souples.
+  blob PieceJointeBlob?
+
+  @@index([mesureId])
+}
+
+// Contenu binaire d'une pièce jointe (data URL base64), isolé pour ne pas alourdir
+// les requêtes sur PieceJointe. Relation 1-1.
+model PieceJointeBlob {
+  pieceJointeId Int         @id
+  pieceJointe   PieceJointe @relation(fields: [pieceJointeId], references: [id], onDelete: Cascade)
+  contenu       String // data URL base64
 }
 
 // Append-only : aucun UPDATE/DELETE dans le code (inaltérabilité §8.5)

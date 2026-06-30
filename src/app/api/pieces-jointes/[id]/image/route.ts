@@ -10,12 +10,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!session) return new NextResponse('Non autorisé', { status: 401 })
 
   const { id } = await params
-  const piece = await prisma.pieceJointe.findUnique({ where: { id: Number(id) } })
-  if (!piece || !piece.contenu) {
+  const blob = await prisma.pieceJointeBlob.findUnique({ where: { pieceJointeId: Number(id) } })
+  if (!blob || !blob.contenu) {
     return new NextResponse('Introuvable', { status: 404 })
   }
   // contenu = data URL "data:<mime>;base64,xxxx"
-  const m = piece.contenu.match(/^data:([^;]+);base64,(.*)$/)
+  const m = blob.contenu.match(/^data:([^;]+);base64,(.*)$/)
   if (!m) return new NextResponse('Format invalide', { status: 415 })
   const mime = m[1]
   const buffer = Buffer.from(m[2], 'base64')
