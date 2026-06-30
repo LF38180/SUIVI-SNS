@@ -1,5 +1,11 @@
 import { prisma } from '@/lib/db'
 
+// "Aujourd'hui" au fuseau de la commune (Europe/Paris), au format yyyy-mm-dd.
+// Évite qu'une mesure soit comptée "en retard" un jour trop tôt à cause d'UTC.
+export function aujourdhuiParis(): string {
+  return new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date())
+}
+
 export async function toutesLesMesures() {
   return prisma.mesure.findMany({
     where: { deletedAt: null },
@@ -22,7 +28,7 @@ export async function mesuresASurveiller() {
   })
   const now = Date.now()
   const seuilDormance = 90 * 86400000
-  const aujourdhui = new Date().toISOString().slice(0, 10)
+  const aujourdhui = aujourdhuiParis()
 
   const items = mesures
     .map((m) => {
@@ -53,7 +59,7 @@ export async function mesuresAvecEcheance() {
     orderBy: { echeanceCible: 'asc' },
     include: { eluReferent: true },
   })
-  const aujourdhui = new Date().toISOString().slice(0, 10)
+  const aujourdhui = aujourdhuiParis()
   return mesures.map((m) => ({
     id: m.id,
     intitule: m.intitule,

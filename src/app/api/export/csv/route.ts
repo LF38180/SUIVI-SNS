@@ -5,7 +5,10 @@ import { NOMS_AXES } from '@/lib/axes'
 import { statutDe } from '@/lib/statut'
 
 function champ(v: unknown): string {
-  const s = String(v ?? '')
+  let s = String(v ?? '')
+  // Anti-injection de formule Excel/Sheets : préfixer une apostrophe si la
+  // valeur commence par un caractère de formule (= + - @, tab, retour chariot).
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
   return `"${s.replace(/"/g, '""')}"`
 }
 
@@ -13,7 +16,11 @@ export async function GET() {
   const session = await lireSession()
   if (!session) return NextResponse.json({ erreur: 'Non autorisé' }, { status: 401 })
 
-  const mesures = await prisma.mesure.findMany({ orderBy: { ordre: 'asc' }, include: { eluReferent: true } })
+  const mesures = await prisma.mesure.findMany({
+    where: { deletedAt: null },
+    orderBy: { ordre: 'asc' },
+    include: { eluReferent: true },
+  })
   const entete = ['Axe', 'Rubrique', 'Intitulé', 'Référent', 'Coût', 'Ordre de grandeur', 'Avancement', 'Statut']
   const lignes = mesures.map((m) =>
     [

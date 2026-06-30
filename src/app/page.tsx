@@ -5,7 +5,8 @@ import { Barre } from '@/components/Barre'
 import { EnTete } from '@/components/EnTete'
 import { NOMS_AXES } from '@/lib/axes'
 import { statutDe, STATUTS } from '@/lib/statut'
-import { CourbeEvolution, PointEvolution } from '@/components/CourbeEvolution'
+import { CourbeEvolution } from '@/components/CourbeEvolution'
+import { reconstruireCourbe } from '@/lib/evolution'
 import { BoutonImpression } from '@/components/BoutonImpression'
 import Link from 'next/link'
 
@@ -18,11 +19,10 @@ export default async function TableauDeBord() {
     n: mesures.filter((m) => statutDe(m.avancementPublie).nom === s.nom).length,
   }))
 
+  // Courbe d'évolution : moyenne globale reconstituée dans le temps (replay de l'historique)
   const histo = await prisma.historique.findMany({ orderBy: { date: 'asc' } })
-  const points: PointEvolution[] = histo.map((h) => ({
-    date: h.date.toISOString().slice(0, 10),
-    pourcent: h.nouveauPourcent,
-  }))
+  const actuels = new Map(mesures.map((m) => [m.id, m.avancementPublie]))
+  const points = reconstruireCourbe(actuels, histo, mesures.length)
 
   return (
     <>

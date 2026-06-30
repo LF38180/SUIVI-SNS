@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { lireSession } from '@/lib/session'
 
-// Sert le binaire d'une pièce jointe (photo/document) stockée en base64,
-// au lieu de l'inliner dans le HTML SSR. Mise en cache agressive (immuable).
+// Sert le binaire d'une pièce jointe (photo/document) stockée en base64.
+// Réservé aux utilisateurs connectés (les pièces jointes sont internes) :
+// sans ce contrôle, n'importe qui pourrait énumérer /api/pieces-jointes/N/image.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await lireSession()
+  if (!session) return new NextResponse('Non autorisé', { status: 401 })
+
   const { id } = await params
   const piece = await prisma.pieceJointe.findUnique({ where: { id: Number(id) } })
   if (!piece || !piece.contenu) {
@@ -17,7 +22,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       'Content-Type': mime,
-      'Cache-Control': 'public, max-age=31536000, immutable',
+      // privé : ne pas mettre en cache sur des proxies partagés (donnée interne)
+      'Cache-Control': 'private, max-age=86400',
     },
   })
 }

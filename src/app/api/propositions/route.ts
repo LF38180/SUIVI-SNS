@@ -14,6 +14,11 @@ export async function POST(req: NextRequest) {
   if (!mesureId || Number.isNaN(av)) {
     return NextResponse.json({ erreur: 'Données invalides' }, { status: 400 })
   }
+  // La mesure doit exister et ne pas être supprimée (évite les propositions orphelines).
+  const cible = await prisma.mesure.findFirst({ where: { id: Number(mesureId), deletedAt: null } })
+  if (!cible) {
+    return NextResponse.json({ erreur: 'Mesure introuvable' }, { status: 404 })
+  }
   const prop = await prisma.proposition.create({
     data: {
       mesureId: Number(mesureId),
