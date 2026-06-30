@@ -9,6 +9,9 @@ import { statutDe } from '@/lib/statut'
 import { PublicMesures, MesurePublique } from '@/components/PublicMesures'
 import Link from 'next/link'
 
+// La vue publique lit la base à chaque rendu (données validées) → dynamique
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata() {
   const mesures = await toutesLesMesures()
   const programme = mesures.filter((m) => m.categorie !== 'HORS_PROGRAMME')
