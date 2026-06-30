@@ -66,7 +66,7 @@ export function PublicMesures({ mesures, partageActif }: { mesures: MesurePubliq
             <div key={a}>
               <div style={{ margin: '26px 0 10px', fontSize: 16, fontWeight: 700 }}>{NOMS_AXES[a]}</div>
               {ms.map((m) => (
-                <div key={m.id} className="card">
+                <div key={m.id} id={`mesure-${m.id}`} className="card" style={{ scrollMarginTop: 80 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 600, marginBottom: 7 }}>{m.intitule}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <BadgeStatut avancement={m.avancementPublie} />

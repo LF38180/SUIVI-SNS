@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 // Compression image via <img> + canvas (compatible iOS/HEIC que Safari sait afficher),
@@ -20,21 +20,38 @@ function chargerImage(dataUrl: string): Promise<HTMLImageElement> {
     i.src = dataUrl
   })
 }
-async function compresser(file: File, maxLargeur = 1280, qualite = 0.7): Promise<string> {
+// Compresse une image vers une cible de poids (~600 Ko) pour tenir sur la 4G d'un chantier.
+// Dégrade largeur puis qualité tant que c'est trop lourd. Fallback brut si échec.
+async function compresser(file: File): Promise<string> {
   const brut = await lireFichier(file)
   if (!file.type.startsWith('image/')) return brut // documents : tels quels
+  const CIBLE = 800_000 // ~600 Ko de fichier ≈ 800k caractères base64
   try {
     const img = await chargerImage(brut)
-    const ratio = img.naturalWidth > maxLargeur ? maxLargeur / img.naturalWidth : 1
-    const w = Math.round(img.naturalWidth * ratio)
-    const h = Math.round(img.naturalHeight * ratio)
+    for (const [maxLargeur, qualite] of [
+      [1280, 0.7],
+      [1024, 0.6],
+      [800, 0.55],
+    ] as const) {
+      const ratio = img.naturalWidth > maxLargeur ? maxLargeur / img.naturalWidth : 1
+      const w = Math.round(img.naturalWidth * ratio)
+      const h = Math.round(img.naturalHeight * ratio)
+      const c = document.createElement('canvas')
+      c.width = w
+      c.height = h
+      c.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      const out = c.toDataURL('image/jpeg', qualite)
+      if (out.length <= CIBLE) return out
+    }
+    // dernier recours : 800px / q0.45
     const c = document.createElement('canvas')
-    c.width = w
-    c.height = h
-    c.getContext('2d')!.drawImage(img, 0, 0, w, h)
-    return c.toDataURL('image/jpeg', qualite)
+    const ratio = img.naturalWidth > 800 ? 800 / img.naturalWidth : 1
+    c.width = Math.round(img.naturalWidth * ratio)
+    c.height = Math.round(img.naturalHeight * ratio)
+    c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height)
+    return c.toDataURL('image/jpeg', 0.45)
   } catch {
-    return brut // fallback : l'upload réussit quand même
+    return brut
   }
 }
 
@@ -45,6 +62,17 @@ export function FormPieceJointe({ mesureId }: { mesureId: number }) {
   const [url, setUrl] = useState('')
   const [msg, setMsg] = useState('')
   const [enCours, setEnCours] = useState(false)
+  const refCamera = useRef<HTMLInputElement>(null)
+  const refGalerie = useRef<HTMLInputElement>(null)
+  const refDoc = useRef<HTMLInputElement>(null)
+
+  // envoie plusieurs fichiers à la suite (galerie multi-sélection)
+  async function envoyerPlusieurs(files: FileList | null) {
+    if (!files || !files.length) return
+    for (const f of Array.from(files)) {
+      await envoyerFichier(f)
+    }
+  }
 
   async function envoyerFichier(file: File) {
     setEnCours(true)
@@ -111,16 +139,43 @@ export function FormPieceJointe({ mesureId }: { mesureId: number }) {
       <input placeholder="Légende (optionnel)" value={legende} onChange={(e) => setLegende(e.target.value)} style={input} />
 
       {mode === 'fichier' ? (
-        <input
-          type="file"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-          disabled={enCours}
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) envoyerFichier(f)
-          }}
-          style={{ ...input, padding: 8 }}
-        />
+        <div>
+          {/* Inputs cachés, déclenchés par les gros boutons */}
+          <input
+            ref={refCamera}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(e) => envoyerPlusieurs(e.target.files)}
+          />
+          <input
+            ref={refGalerie}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => envoyerPlusieurs(e.target.files)}
+          />
+          <input
+            ref={refDoc}
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            hidden
+            onChange={(e) => envoyerPlusieurs(e.target.files)}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+            <button type="button" onClick={() => refCamera.current?.click()} disabled={enCours} className="btn primary" style={{ minHeight: 48, flex: 1, minWidth: 140 }}>
+              📷 Prendre une photo
+            </button>
+            <button type="button" onClick={() => refGalerie.current?.click()} disabled={enCours} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140 }}>
+              🖼️ Choisir des photos
+            </button>
+            <button type="button" onClick={() => refDoc.current?.click()} disabled={enCours} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140 }}>
+              📄 Document
+            </button>
+          </div>
+        </div>
       ) : (
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <input placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} style={{ ...input, marginTop: 0, flex: 1 }} />

@@ -9,6 +9,21 @@ import { statutDe } from '@/lib/statut'
 import { PublicMesures, MesurePublique } from '@/components/PublicMesures'
 import Link from 'next/link'
 
+export async function generateMetadata() {
+  const mesures = await toutesLesMesures()
+  const programme = mesures.filter((m) => m.categorie !== 'HORS_PROGRAMME')
+  const global = moyenne(programme.map((m) => m.avancementPublie))
+  const realisees = programme.filter((m) => m.avancementPublie >= 100).length
+  const titre = `Programme Seyssins Nature & Solidaire — ${global}% avancé`
+  const description = `${realisees} engagements tenus, sur ${programme.length}. Suivez l'avancement de notre programme municipal 2026-2032.`
+  return {
+    title: titre,
+    description,
+    openGraph: { title: titre, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title: titre, description },
+  }
+}
+
 export default async function VuePublique() {
   const mesures = await toutesLesMesures()
   // engagements du programme uniquement (hors initiatives) pour le chiffre clé

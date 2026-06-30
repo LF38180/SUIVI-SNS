@@ -1,17 +1,46 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Barre } from './Barre'
 
 const PALIERS = [0, 25, 50, 75, 100]
 
 export function FormProposition({ mesureId, avancementActuel }: { mesureId: number; avancementActuel: number }) {
+  const cleBrouillon = `sns-draft-${mesureId}`
   const [av, setAv] = useState(avancementActuel)
   const [commentaire, setCommentaire] = useState('')
   const [msg, setMsg] = useState('')
   const [ok, setOk] = useState(false)
   const [enCours, setEnCours] = useState(false)
+  const [brouillonRestaure, setBrouillonRestaure] = useState(false)
   const router = useRouter()
+
+  // Restaure un brouillon non envoyé (réseau coupé sur le terrain, page rechargée…)
+  useEffect(() => {
+    try {
+      const brut = localStorage.getItem(cleBrouillon)
+      if (brut) {
+        const d = JSON.parse(brut)
+        if (typeof d.av === 'number') setAv(d.av)
+        if (typeof d.commentaire === 'string') setCommentaire(d.commentaire)
+        setBrouillonRestaure(true)
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sauvegarde le brouillon à chaque changement (sauf valeur initiale vide)
+  useEffect(() => {
+    try {
+      if (commentaire || av !== avancementActuel) {
+        localStorage.setItem(cleBrouillon, JSON.stringify({ av, commentaire }))
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [av, commentaire, avancementActuel, cleBrouillon])
 
   function borne(v: number) {
     return Math.max(0, Math.min(100, v))
@@ -32,12 +61,18 @@ export function FormProposition({ mesureId, avancementActuel }: { mesureId: numb
         setOk(true)
         setMsg('Proposition envoyée ✓ Elle est en attente de validation par un administrateur.')
         setCommentaire('')
+        setBrouillonRestaure(false)
+        try {
+          localStorage.removeItem(cleBrouillon)
+        } catch {
+          /* ignore */
+        }
         router.refresh()
       } else {
         setMsg((await res.json()).erreur ?? 'Erreur')
       }
     } catch {
-      setMsg('Pas de réseau. Réessayez quand vous aurez du signal.')
+      setMsg('Pas de réseau — votre saisie est gardée sur cet appareil. Réessayez quand vous aurez du signal.')
     } finally {
       setEnCours(false)
     }
@@ -59,6 +94,11 @@ export function FormProposition({ mesureId, avancementActuel }: { mesureId: numb
   return (
     <div className="panel" style={{ marginTop: 18 }}>
       <h2>Où en est cette mesure ?</h2>
+      {brouillonRestaure && (
+        <div style={{ fontSize: 12, color: '#8A5E0F', background: '#FAF7F4', borderRadius: 8, padding: '6px 10px', marginTop: 6 }}>
+          Brouillon restauré (saisie non envoyée).
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
         <span>Avancement proposé</span>
         <b style={{ fontSize: 18, color: '#C0461F' }}>{av}%</b>

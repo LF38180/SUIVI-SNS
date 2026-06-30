@@ -17,7 +17,18 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
       adjointRattachement: true,
       coReferents: { include: { user: true } },
       journalEntrees: { include: { auteur: true }, orderBy: { date: 'desc' } },
-      piecesJointes: { include: { ajouteePar: true }, orderBy: { date: 'desc' } },
+      // on EXCLUT 'contenu' (base64) du SSR : servi à la demande via /api/pieces-jointes/[id]/image
+      piecesJointes: {
+        orderBy: { date: 'desc' },
+        select: {
+          id: true,
+          type: true,
+          url: true,
+          nomFichier: true,
+          legende: true,
+          ajouteePar: { select: { nom: true } },
+        },
+      },
       historique: { orderBy: { date: 'desc' } },
       propositions: {
         where: { statut: 'EN_ATTENTE' },
@@ -159,22 +170,28 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
             {mesure.piecesJointes.map((p) => (
               <div key={p.id} style={{ width: 150, fontSize: 12 }}>
-                {p.type === 'PHOTO' && p.contenu && (
+                {p.type === 'PHOTO' && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.contenu} alt={p.legende ?? 'photo'} style={{ width: '100%', borderRadius: 8, border: '1px solid #ECE5DF' }} />
+                  <img
+                    src={`/api/pieces-jointes/${p.id}/image`}
+                    alt={p.legende ?? 'photo'}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ width: '100%', borderRadius: 8, border: '1px solid #ECE5DF' }}
+                  />
                 )}
-                {p.type === 'DOCUMENT' && p.contenu && (
-                  <a href={p.contenu} download={p.nomFichier ?? 'document'} style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#EE6B3E', fontWeight: 600 }}>
+                {p.type === 'DOCUMENT' && (
+                  <a href={`/api/pieces-jointes/${p.id}/image`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#C0461F', fontWeight: 600 }}>
                     📄 {p.nomFichier ?? 'Document'}
                   </a>
                 )}
                 {p.type === 'LIEN' && p.url && (
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#EE6B3E', fontWeight: 600, wordBreak: 'break-all' }}>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '14px 10px', background: '#FAF7F4', borderRadius: 8, border: '1px solid #ECE5DF', textAlign: 'center', color: '#C0461F', fontWeight: 600, wordBreak: 'break-all' }}>
                     🔗 {p.legende || 'Lien'}
                   </a>
                 )}
                 {p.legende && <div style={{ color: '#6E6E73', marginTop: 4 }}>{p.legende}</div>}
-                <div style={{ color: '#9A9AA0', fontSize: 11 }}>{p.ajouteePar.nom}</div>
+                <div style={{ color: '#6E6E73', fontSize: 11 }}>{p.ajouteePar.nom}</div>
               </div>
             ))}
           </div>
