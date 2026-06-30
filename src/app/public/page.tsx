@@ -35,6 +35,7 @@ export default async function VuePublique() {
   const axes = agregatsParAxe(programme)
   const partageActif = await partageAutorise()
 
+  const initiatives = mesures.filter((m) => m.categorie === 'HORS_PROGRAMME')
   const realisees = programme.filter((m) => m.avancementPublie >= 100).length
   const enCours = programme.filter((m) => {
     const n = statutDe(m.avancementPublie).nom
@@ -99,7 +100,7 @@ export default async function VuePublique() {
             {dernieres.map((h) => (
               <div key={h.id} style={{ borderBottom: '1px solid #ECE5DF', padding: '8px 0', fontSize: 13 }}>
                 <b>{h.mesure.intitule}</b> — passé à <b style={{ color: '#C0461F' }}>{h.nouveauPourcent}%</b>{' '}
-                <span style={{ color: '#9A9AA0' }}>({depuis(h.date)})</span>
+                <span style={{ color: '#6E6E73' }}>({depuis(h.date)})</span>
               </div>
             ))}
           </div>
@@ -107,6 +108,22 @@ export default async function VuePublique() {
 
         {/* Liste filtrable par thème */}
         <PublicMesures mesures={vues} partageActif={partageActif} />
+
+        {/* Au-delà du programme : initiatives hors-programme (section distincte) */}
+        {initiatives.length > 0 && (
+          <div style={{ marginTop: 36, background: '#EEF3EE', borderRadius: 14, padding: '20px 22px' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#2E6B33' }}>Au-delà du programme</div>
+            <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 4, marginBottom: 12 }}>
+              Ce que nous avons engagé en plus de nos {programme.length} engagements.
+            </div>
+            {initiatives.map((m) => (
+              <div key={m.id} style={{ background: '#fff', border: '1px solid #DCE6DC', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{m.intitule}</div>
+                <div style={{ fontSize: 12, color: '#2E6B33', marginTop: 4 }}>{m.avancementPublie}% · {statutDe(m.avancementPublie).nom}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Bandeau séparation + mentions légales */}
         <footer style={{ marginTop: 40, fontSize: 12, color: '#6E6E73', borderTop: '1px solid #ECE5DF', paddingTop: 16 }}>

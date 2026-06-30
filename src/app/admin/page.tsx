@@ -146,6 +146,14 @@ export default async function AccueilAdmin() {
             <b>Journal d’audit</b>
             <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
           </Link>
+          <Link href="/admin/echeances" style={carte}>
+            <b>Échéancier</b>
+            <div style={sousTexte}>Les mesures par date cible, retards en évidence.</div>
+          </Link>
+          <Link href="/presentation" style={carte}>
+            <b>Mode présentation 🖥️</b>
+            <div style={sousTexte}>Plein écran pour réunion / conseil. Navigation au clavier.</div>
+          </Link>
           <div style={{ ...carte, opacity: 0.65 }}>
             <b>Bilan de mi-mandat 📅</b>
             <div style={sousTexte}>

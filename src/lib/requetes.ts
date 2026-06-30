@@ -46,6 +46,24 @@ export async function mesuresASurveiller() {
   return [...parReferent.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 }
 
+// Mesures avec une échéance cible, triées par date. Pour la frise/échéancier admin.
+export async function mesuresAvecEcheance() {
+  const mesures = await prisma.mesure.findMany({
+    where: { deletedAt: null, echeanceCible: { not: null } },
+    orderBy: { echeanceCible: 'asc' },
+    include: { eluReferent: true },
+  })
+  const aujourdhui = new Date().toISOString().slice(0, 10)
+  return mesures.map((m) => ({
+    id: m.id,
+    intitule: m.intitule,
+    referent: m.eluReferent?.nom ?? null,
+    avancementPublie: m.avancementPublie,
+    echeance: m.echeanceCible!.toISOString().slice(0, 10),
+    enRetard: m.echeanceCible!.toISOString().slice(0, 10) < aujourdhui && m.avancementPublie < 100,
+  }))
+}
+
 // Formate une date relative simple en français ("il y a 3 jours", "aujourd'hui").
 export function depuis(date: Date | null | undefined): string | null {
   if (!date) return null
