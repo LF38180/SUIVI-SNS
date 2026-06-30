@@ -3,8 +3,8 @@ export function Jauge({ pourcent, taille = 138 }: { pourcent: number; taille?: n
   const c = 2 * Math.PI * r
   const offset = c * (1 - Math.max(0, Math.min(100, pourcent)) / 100)
   return (
-    <div style={{ position: 'relative', width: taille, height: taille, flex: 'none' }}>
-      <svg width={taille} height={taille} viewBox="0 0 138 138" style={{ transform: 'rotate(-90deg)' }}>
+    <div style={{ position: 'relative', width: taille, height: taille, flex: 'none' }} role="img" aria-label={`Avancement : ${Math.round(pourcent)} %`}>
+      <svg width={taille} height={taille} viewBox="0 0 138 138" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
         <circle cx="69" cy="69" r={r} fill="none" stroke="#FCE9E1" strokeWidth="14" />
         <circle
           cx="69"

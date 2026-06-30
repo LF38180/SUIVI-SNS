@@ -32,9 +32,12 @@ export default function RootLayout({
   return (
     <html lang="fr" className={poppins.variable}>
       <body>
+        <a href="#contenu" className="skip-link">
+          Aller au contenu
+        </a>
         <Nav />
         <RappelMdp />
-        {children}
+        <main id="contenu">{children}</main>
       </body>
     </html>
   )

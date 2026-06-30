@@ -40,10 +40,22 @@ export default async function MesMesures() {
     REFUSEE: { texte: 'À revoir', couleur: '#C0461F' },
   }
 
+  // Avancement global du programme (chiffre clé en haut de l'accueil, demandé par le maire)
+  const toutes = await prisma.mesure.findMany({ where: { deletedAt: null, categorie: { not: 'HORS_PROGRAMME' } }, select: { avancementPublie: true } })
+  const global = toutes.length ? Math.round(toutes.reduce((a, m) => a + m.avancementPublie, 0) / toutes.length) : 0
+
+  const aujourdhui = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date())
+
   return (
     <>
       <EnTete titre="Mes mesures" sousTitre="Les engagements dont vous avez la charge." />
       <div style={{ maxWidth: 880, margin: '0 auto', padding: '0 22px 80px' }}>
+        {/* Chiffre clé du programme */}
+        <div className="panel" style={{ marginTop: -34, position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ fontSize: 34, fontWeight: 800, color: '#C0461F', lineHeight: 1 }}>{global}%</div>
+          <div style={{ fontSize: 13, color: '#6E6E73' }}>du programme avancé (les 67 engagements)</div>
+        </div>
+
         {/* Aide rapide */}
         <div className="note" style={{ marginTop: 18, background: '#FCE9E1', borderRadius: 10, padding: '12px 15px', fontSize: 13, color: '#C0461F' }}>
           <b>Comment ça marche ?</b> 1. Ouvrez une mesure · 2. Indiquez où elle en est (boutons %) · 3. Envoyez. Un
@@ -60,10 +72,20 @@ export default async function MesMesures() {
           )}
           {mesures.map((m) => {
             const maj = depuis(m.historique[0]?.date ?? null)
+            const ech = m.echeanceCible ? m.echeanceCible.toISOString().slice(0, 10) : null
+            const enRetard = ech != null && ech < aujourdhui && m.avancementPublie < 100
             return (
               <Link key={m.id} href={`/mesures/${m.id}#mise-a-jour`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="card">
-                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{m.intitule}</div>
+                <div className="card" style={{ borderLeft: enRetard ? '4px solid #C0461F' : undefined }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>
+                    {m.intitule}
+                    {enRetard && <span style={{ marginLeft: 8, fontSize: 12, color: '#C0461F', fontWeight: 700 }}>⚠ en retard</span>}
+                  </div>
+                  {ech && (
+                    <div style={{ fontSize: 12, color: enRetard ? '#C0461F' : '#6E6E73', marginBottom: 6 }}>
+                      Échéance : {new Date(ech).toLocaleDateString('fr-FR')}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <BadgeStatut avancement={m.avancementPublie} />
                     <b style={{ color: '#C0461F' }}>{m.avancementPublie}%</b>

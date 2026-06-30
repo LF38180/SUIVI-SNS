@@ -94,11 +94,13 @@ export function Cloche() {
       {ouvert && (
         <div
           style={{
-            position: 'absolute',
-            right: 0,
-            top: 32,
-            width: 320,
-            maxHeight: 400,
+            position: 'fixed',
+            right: 8,
+            left: 8,
+            top: 56,
+            maxWidth: 360,
+            marginLeft: 'auto',
+            maxHeight: '70vh',
             overflowY: 'auto',
             background: '#fff',
             border: '1px solid #ECE5DF',

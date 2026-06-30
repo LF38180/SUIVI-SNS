@@ -72,7 +72,9 @@ export function BarreNav({ liens }: { liens: LienNav[] }) {
             >
               {ouvert ? '✕' : '☰'}
             </button>
-            <span style={{ fontWeight: 800, color: '#EE6B3E', fontSize: 16 }}>SNS</span>
+            <Link href="/" style={{ fontWeight: 800, color: '#EE6B3E', fontSize: 16, textDecoration: 'none' }}>
+              SNS
+            </Link>
             <div style={{ marginLeft: 'auto' }}>
               <Cloche />
             </div>
