@@ -111,6 +111,10 @@ export default async function AccueilAdmin() {
             <b>🛡️ Journal d’audit</b>
             <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
           </Link>
+          <div style={{ ...carte, opacity: 0.6, cursor: 'default' }}>
+            <b>📅 Bilan de mi-mandat</b>
+            <div style={sousTexte}>Figer l’état des engagements et générer le dossier. Disponible à l’approche de 2029.</div>
+          </div>
         </div>
 
         {/* File de validation (aperçu) */}
@@ -165,13 +169,6 @@ export default async function AccueilAdmin() {
           ))}
         </div>
 
-        {/* Bilan de mi-mandat (à venir) */}
-        <div style={{ ...carte, opacity: 0.65, marginTop: 24 }}>
-          <b>📅 Bilan de mi-mandat</b>
-          <div style={sousTexte}>
-            Figer l’état des engagements à une date et générer le dossier de bilan. Disponible à l’approche de 2029.
-          </div>
-        </div>
       </div>
     </>
   )
