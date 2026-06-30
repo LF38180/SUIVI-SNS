@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function Connexion() {
   const [email, setEmail] = useState('')
@@ -8,7 +7,6 @@ export default function Connexion() {
   const [voirMdp, setVoirMdp] = useState(false)
   const [erreur, setErreur] = useState('')
   const [aide, setAide] = useState(false)
-  const router = useRouter()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -20,7 +18,10 @@ export default function Connexion() {
     })
     if (res.ok) {
       const data = await res.json()
-      router.push(data.role === 'ADMIN' ? '/admin' : '/mes-mesures')
+      // Rechargement COMPLET (pas router.push) : la barre de navigation est un
+      // Server Component rendu avant connexion ; un simple push ne la régénère pas
+      // → on force un vrai chargement pour que les onglets apparaissent tout de suite.
+      window.location.href = data.role === 'ADMIN' ? '/admin' : '/mes-mesures'
     } else {
       setErreur('Email ou mot de passe incorrect. Vérifiez le message reçu par mail.')
     }
