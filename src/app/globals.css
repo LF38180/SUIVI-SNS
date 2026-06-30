@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+/* Police Poppins auto-hébergée via next/font (variable --police, voir layout.tsx) */
 
 /* Charte graphique SNS (cahier des charges §7) */
 :root {
@@ -25,7 +25,7 @@
 }
 
 body {
-  font-family: 'Poppins', system-ui, Arial, sans-serif;
+  font-family: var(--police), 'Poppins', system-ui, Arial, sans-serif;
   background: var(--fond);
   color: var(--dark);
   line-height: 1.5;

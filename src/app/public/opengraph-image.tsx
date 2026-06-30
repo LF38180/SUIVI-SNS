@@ -4,8 +4,8 @@ import { toutesLesMesures, moyenne } from '@/lib/requetes'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 export const alt = 'Suivi du programme Seyssins Nature & Solidaire'
-// L'image dépend de la base de données → ne pas pré-générer au build
-export const dynamic = 'force-dynamic'
+// Régénérée au max toutes les 5 min (comme la page), pas à chaque scrape social
+export const revalidate = 300
 
 export default async function Image() {
   const mesures = await toutesLesMesures()

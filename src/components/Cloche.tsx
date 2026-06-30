@@ -26,8 +26,20 @@ export function Cloche() {
 
   useEffect(() => {
     charger()
-    const t = setInterval(charger, 60000) // rafraîchit chaque minute
-    return () => clearInterval(t)
+    // rafraîchit toutes les 5 min, et seulement si l'onglet est visible
+    // (évite des requêtes inutiles en continu → moins de charge serveur/coût)
+    const t = setInterval(() => {
+      if (!document.hidden) charger()
+    }, 300000)
+    // recharge aussi quand l'utilisateur revient sur l'onglet
+    function onVisible() {
+      if (!document.hidden) charger()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
 
   // fermer au clic extérieur

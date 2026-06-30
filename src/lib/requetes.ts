@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { prisma } from '@/lib/db'
 
 // "Aujourd'hui" au fuseau de la commune (Europe/Paris), au format yyyy-mm-dd.
@@ -6,7 +7,8 @@ export function aujourdhuiParis(): string {
   return new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date())
 }
 
-export async function toutesLesMesures() {
+// cache() : dédoublonne l'appel dans un même rendu (page + generateMetadata + og-image)
+export const toutesLesMesures = cache(async function toutesLesMesures() {
   return prisma.mesure.findMany({
     where: { deletedAt: null },
     orderBy: { ordre: 'asc' },
@@ -17,7 +19,7 @@ export async function toutesLesMesures() {
       historique: { orderBy: { date: 'desc' }, take: 1 },
     },
   })
-}
+})
 
 // Mesures "à surveiller" pour l'admin : en retard (échéance dépassée, non réalisée)
 // ou dormantes (aucune validation depuis 90 jours). Groupées par référent.

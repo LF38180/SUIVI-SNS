@@ -91,6 +91,9 @@ model Mesure {
   piecesJointes  PieceJointe[]
   historique     Historique[]
   coReferents    MesureCoReferent[]
+
+  @@index([deletedAt])
+  @@index([categorie])
 }
 
 // Paramètres globaux de l'application (réglages admin clé/valeur).
@@ -152,6 +155,9 @@ model Proposition {
   valideePar        User?             @relation("Validateur", fields: [valideeParId], references: [id])
   creeeLe           DateTime          @default(now())
   traiteeLe         DateTime?
+
+  @@index([statut])
+  @@index([mesureId])
 }
 
 model JournalEntree {
@@ -190,4 +196,7 @@ model Historique {
   proposeParId    Int?
   valideeParId    Int?
   date            DateTime @default(now())
+
+  @@index([date])
+  @@index([mesureId, date])
 }

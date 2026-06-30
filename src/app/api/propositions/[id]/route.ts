@@ -4,6 +4,7 @@ import { lireSession } from '@/lib/session'
 import { peutValider } from '@/lib/permissions'
 import { calculerEffetValidation } from '@/lib/validation'
 import { notifierUser, notifierTousSauf } from '@/lib/notifications'
+import { revalidatePath } from 'next/cache'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await lireSession()
@@ -47,6 +48,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const lien = `/mesures/${prop.mesureId}`
     await notifierUser(prop.auteurId, `Votre proposition sur « ${prop.mesure.intitule} » a été validée (${effet.nouveauAvancementPublie}%)`, lien)
     await notifierTousSauf(prop.auteurId, `« ${prop.mesure.intitule} » est passé à ${effet.nouveauAvancementPublie}%`, lien)
+    // régénère la vue publique mise en cache (la donnée publiée a changé)
+    revalidatePath('/public')
     return NextResponse.json({ ok: true })
   }
 

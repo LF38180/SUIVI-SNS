@@ -9,8 +9,10 @@ import { statutDe } from '@/lib/statut'
 import { PublicMesures, MesurePublique } from '@/components/PublicMesures'
 import Link from 'next/link'
 
-// La vue publique lit la base à chaque rendu (données validées) → dynamique
-export const dynamic = 'force-dynamic'
+// La vue publique est mise en cache et régénérée au max toutes les 5 min,
+// ET immédiatement à chaque validation admin (revalidatePath). Encaisse un pic
+// de partage sans frapper Postgres à chaque visite.
+export const revalidate = 300
 
 export async function generateMetadata() {
   const mesures = await toutesLesMesures()
