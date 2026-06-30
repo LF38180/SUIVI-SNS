@@ -74,8 +74,47 @@ export default async function AccueilAdmin() {
           </div>
         </section>
 
+        {/* Raccourcis modules — remontés en haut pour un accès direct */}
+        <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#5a5a5f', margin: '28px 0 12px' }}>
+          Gérer
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+          <Link href="/admin/validations" style={{ ...carte, borderColor: nbAttente > 0 ? '#EE6B3E' : '#ECE5DF' }}>
+            <b>✅ À valider {nbAttente > 0 ? `(${nbAttente})` : ''}</b>
+            <div style={sousTexte}>Avancements et photos proposés par les élus.</div>
+          </Link>
+          <Link href="/admin/mesures" style={carte}>
+            <b>📋 Gérer les mesures</b>
+            <div style={sousTexte}>Référents, co-référents, besoins, limites, échéances, visibilité publique.</div>
+          </Link>
+          <Link href="/admin/comptes" style={carte}>
+            <b>👥 Gérer les comptes</b>
+            <div style={sousTexte}>{nbComptes} comptes actifs. Créer, réinitialiser, désactiver les élus.</div>
+          </Link>
+          <Link href="/admin/echeances" style={carte}>
+            <b>📅 Échéancier</b>
+            <div style={sousTexte}>Les mesures par date cible, retards en évidence.</div>
+          </Link>
+          <Link href="/" style={carte}>
+            <b>📊 Tableau de bord</b>
+            <div style={sousTexte}>Synthèse, jauges par axe, courbe d’évolution, exports.</div>
+          </Link>
+          <Link href="/public" style={carte}>
+            <b>🌍 Vue publique</b>
+            <div style={sousTexte}>Ce que voient les habitants (données publiées uniquement).</div>
+          </Link>
+          <Link href="/presentation" style={carte}>
+            <b>🖥️ Mode présentation</b>
+            <div style={sousTexte}>Plein écran pour réunion / conseil.</div>
+          </Link>
+          <Link href="/admin/audit" style={carte}>
+            <b>🛡️ Journal d’audit</b>
+            <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
+          </Link>
+        </div>
+
         {/* File de validation (aperçu) */}
-        <div className="panel" style={{ marginTop: 24 }}>
+        <div className="panel" style={{ marginTop: 28 }}>
           <h2>Dernières propositions à valider</h2>
           {dernieresProps.length === 0 && (
             <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune proposition en attente. 🎉</div>
@@ -126,41 +165,11 @@ export default async function AccueilAdmin() {
           ))}
         </div>
 
-        {/* Raccourcis */}
-        <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
-          <Link href="/admin/mesures" style={carte}>
-            <b>Gérer les mesures</b>
-            <div style={sousTexte}>Référents, co-référents, besoins, limites, échéances, visibilité publique.</div>
-          </Link>
-          <Link href="/admin/comptes" style={carte}>
-            <b>Gérer les comptes</b>
-            <div style={sousTexte}>{nbComptes} comptes actifs. Créer, activer/désactiver les élus.</div>
-          </Link>
-          <Link href="/" style={carte}>
-            <b>Tableau de bord</b>
-            <div style={sousTexte}>Synthèse, jauges par axe, courbe d’évolution, exports.</div>
-          </Link>
-          <Link href="/public" style={carte}>
-            <b>Vue publique</b>
-            <div style={sousTexte}>Ce que voient les habitants (données publiées uniquement).</div>
-          </Link>
-          <Link href="/admin/audit" style={carte}>
-            <b>Journal d’audit</b>
-            <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
-          </Link>
-          <Link href="/admin/echeances" style={carte}>
-            <b>Échéancier</b>
-            <div style={sousTexte}>Les mesures par date cible, retards en évidence.</div>
-          </Link>
-          <Link href="/presentation" style={carte}>
-            <b>Mode présentation 🖥️</b>
-            <div style={sousTexte}>Plein écran pour réunion / conseil. Navigation au clavier.</div>
-          </Link>
-          <div style={{ ...carte, opacity: 0.65 }}>
-            <b>Bilan de mi-mandat 📅</b>
-            <div style={sousTexte}>
-              Figer l’état des engagements à une date et générer le dossier de bilan. Disponible à l’approche de 2029.
-            </div>
+        {/* Bilan de mi-mandat (à venir) */}
+        <div style={{ ...carte, opacity: 0.65, marginTop: 24 }}>
+          <b>📅 Bilan de mi-mandat</b>
+          <div style={sousTexte}>
+            Figer l’état des engagements à une date et générer le dossier de bilan. Disponible à l’approche de 2029.
           </div>
         </div>
       </div>

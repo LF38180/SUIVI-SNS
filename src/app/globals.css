@@ -55,6 +55,67 @@ a {
   margin-bottom: 14px;
 }
 
+/* Barre de navigation */
+.barre-nav {
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding-top: env(safe-area-inset-top);
+}
+.barre-nav-haut {
+  display: flex;
+  gap: 18px;
+  padding: 12px 22px;
+  align-items: center;
+  font-size: 14px;
+}
+.nav-liens {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nav-droite {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.nav-toggle {
+  display: none; /* caché en bureau */
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+.nav-menu-deroulant {
+  display: none; /* fermé par défaut */
+  flex-direction: column;
+  padding: 0 22px 12px;
+  border-top: 1px solid var(--line);
+}
+.nav-menu-deroulant.ouvert {
+  display: flex;
+}
+
+/* En mobile : on cache les liens en ligne, on montre le bouton menu */
+@media (max-width: 800px) {
+  .nav-liens,
+  .nav-compte-desktop,
+  .nav-deco-desktop {
+    display: none;
+  }
+  .nav-toggle {
+    display: inline-block;
+  }
+}
+
 /* Accessibilité : indicateur de focus visible au clavier (RGAA) */
 :focus-visible {
   outline: 3px solid var(--orange-texte);
