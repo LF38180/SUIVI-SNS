@@ -31,13 +31,13 @@ export default async function Image() {
           Seyssins
           <span style={{ color: '#6E6E73', fontWeight: 400, marginLeft: 4 }}>Nature&amp;Solidaire</span>
         </div>
-        <div style={{ fontSize: 64, fontWeight: 800, color: '#232326', marginTop: 30, lineHeight: 1.1 }}>
-          {global}% du programme avancé
+        <div style={{ display: 'flex', fontSize: 64, fontWeight: 800, color: '#232326', marginTop: 30, lineHeight: 1.1 }}>
+          {`${global}% du programme avancé`}
         </div>
-        <div style={{ fontSize: 36, color: '#C0461F', marginTop: 20 }}>
-          {realisees} engagement{realisees > 1 ? 's' : ''} tenu{realisees > 1 ? 's' : ''} sur {programme.length}
+        <div style={{ display: 'flex', fontSize: 36, color: '#C0461F', marginTop: 20 }}>
+          {`${realisees} engagement${realisees > 1 ? 's' : ''} tenu${realisees > 1 ? 's' : ''} sur ${programme.length}`}
         </div>
-        <div style={{ fontSize: 24, color: '#6E6E73', marginTop: 40 }}>
+        <div style={{ display: 'flex', fontSize: 24, color: '#6E6E73', marginTop: 40 }}>
           Suivi de notre programme municipal 2026-2032
         </div>
       </div>
