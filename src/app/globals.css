@@ -94,22 +94,6 @@ a {
   white-space: nowrap;
 }
 
-/* Navigation responsive : liens en ligne en bureau, menu hamburger en mobile */
-@media (max-width: 760px) {
-  .nav-burger {
-    display: inline-block !important;
-  }
-  .nav-liens-desktop {
-    display: none !important;
-  }
-  .nav-compte {
-    display: none !important;
-  }
-  .nav-menu-mobile {
-    display: flex !important;
-  }
-}
-
 /* Synthèse du tableau de bord : 2 colonnes en bureau, 1 colonne en mobile */
 .synth {
   display: grid;
