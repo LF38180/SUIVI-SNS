@@ -38,6 +38,18 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
     if (res.ok) router.refresh()
   }
 
+  async function reinitMdp(id: number, nom: string) {
+    const nouveau = prompt(`Nouveau mot de passe temporaire pour ${nom} :`, 'sns-temp-2026')
+    if (!nouveau) return
+    const res = await fetch('/api/comptes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, nouveauMotDePasse: nouveau }),
+    })
+    if (res.ok) alert(`Mot de passe réinitialisé. Communiquez « ${nouveau} » à ${nom} ; il devra le changer.`)
+    else alert((await res.json()).erreur ?? 'Erreur')
+  }
+
   async function supprimerRgpd(id: number, nom: string) {
     if (
       !confirm(
@@ -94,6 +106,9 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
             <span style={{ fontWeight: 600 }}>{c.role}</span>
             <button onClick={() => basculer(c.id, c.actif)} className="btn">
               {c.actif ? 'Désactiver' : 'Activer'}
+            </button>
+            <button onClick={() => reinitMdp(c.id, c.nom)} className="btn">
+              Réinit. mot de passe
             </button>
             <button onClick={() => supprimerRgpd(c.id, c.nom)} className="btn" style={{ color: '#C0461F', borderColor: '#C0461F' }}>
               Supprimer (RGPD)

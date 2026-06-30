@@ -41,12 +41,33 @@ export async function PATCH(req: NextRequest) {
   if (!session || !peutGererComptes(session.role)) {
     return NextResponse.json({ erreur: 'Non autorisé' }, { status: 401 })
   }
-  const { id, actif } = await req.json()
-  const u = await prisma.user.update({ where: { id: Number(id) }, data: { actif: Boolean(actif) } })
+  const body = await req.json()
+  const { id } = body
+
+  // Réinitialisation du mot de passe par l'admin (forcera un changement à la connexion)
+  if (typeof body.nouveauMotDePasse === 'string' && body.nouveauMotDePasse) {
+    if (body.nouveauMotDePasse.length < 6) {
+      return NextResponse.json({ erreur: 'Mot de passe trop court (6 min)' }, { status: 400 })
+    }
+    const hash = await hashMotDePasse(String(body.nouveauMotDePasse))
+    const u = await prisma.user.update({
+      where: { id: Number(id) },
+      data: { motDePasseHash: hash, doitChangerMdp: true },
+    })
+    await audit({
+      auteurId: session.userId,
+      auteurNom: await acteur(session.userId),
+      action: 'compte.reinit_mdp',
+      cible: `Compte ${u.nom}`,
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  const u = await prisma.user.update({ where: { id: Number(id) }, data: { actif: Boolean(body.actif) } })
   await audit({
     auteurId: session.userId,
     auteurNom: await acteur(session.userId),
-    action: actif ? 'compte.activation' : 'compte.desactivation',
+    action: body.actif ? 'compte.activation' : 'compte.desactivation',
     cible: `Compte ${u.nom}`,
   })
   return NextResponse.json({ ok: true })

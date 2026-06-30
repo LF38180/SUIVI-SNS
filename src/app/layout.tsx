@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import './globals.css'
 import { Nav } from '@/components/Nav'
+import { RappelMdp } from '@/components/RappelMdp'
 
 // Police auto-hébergée (pas de dépendance Google à l'exécution, pas de fuite IP RGPD,
 // font-display swap → texte lisible vite sur 4G). Graisses réellement utilisées.
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="fr" className={poppins.variable}>
       <body>
         <Nav />
+        <RappelMdp />
         {children}
       </body>
     </html>

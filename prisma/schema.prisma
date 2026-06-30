@@ -48,6 +48,7 @@ model User {
   role           Role    @default(ELU)
   actif          Boolean @default(true)
   fonction       String?
+  doitChangerMdp Boolean @default(true) // bandeau "changer votre mot de passe" tant que vrai
   deletedAt      DateTime? // corbeille (soft-delete) — restaurable
   anonymiseLe    DateTime? // RGPD : compte d'un élu sortant anonymisé
 
@@ -183,12 +184,15 @@ model PieceJointe {
   ajouteeParId Int
   ajouteePar   User      @relation(fields: [ajouteeParId], references: [id])
   date         DateTime  @default(now())
+  // Une pièce jointe passe par validation admin avant d'être visible (comme un avancement)
+  statut       StatutProposition @default(EN_ATTENTE)
 
   // Le contenu binaire lourd (base64) vit dans une table séparée : les requêtes
   // courantes (liste, fiche) ne le chargent JAMAIS. Sauvegardes plus souples.
   blob PieceJointeBlob?
 
   @@index([mesureId])
+  @@index([statut])
 }
 
 // Contenu binaire d'une pièce jointe (data URL base64), isolé pour ne pas alourdir

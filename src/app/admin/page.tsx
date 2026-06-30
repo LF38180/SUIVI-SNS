@@ -11,8 +11,9 @@ export default async function AccueilAdmin() {
   const session = await lireSession()
   if (!session || !peutValider(session.role)) redirect('/')
 
-  const [nbAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
+  const [nbPropsAttente, nbPhotosAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
     prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
+    prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE' } }),
     prisma.mesure.count(),
     prisma.user.count({ where: { actif: true } }),
     prisma.proposition.count({ where: { statut: 'VALIDEE' } }),
@@ -24,6 +25,7 @@ export default async function AccueilAdmin() {
       take: 5,
     }),
   ])
+  const nbAttente = nbPropsAttente + nbPhotosAttente
   const global = moyenne(mesures.map((m) => m.avancementPublie))
   const surveiller = await mesuresASurveiller()
 
@@ -56,7 +58,7 @@ export default async function AccueilAdmin() {
         >
           <Link href="/admin/validations" style={{ ...carte, borderColor: nbAttente > 0 ? '#EE6B3E' : '#ECE5DF' }}>
             <div style={grosNombre}>{nbAttente}</div>
-            <div style={sousTexte}>proposition{nbAttente > 1 ? 's' : ''} à valider {nbAttente > 0 ? '→' : ''}</div>
+            <div style={sousTexte}>élément{nbAttente > 1 ? 's' : ''} à valider (avancements + photos) {nbAttente > 0 ? '→' : ''}</div>
           </Link>
           <div style={carte}>
             <div style={grosNombre}>{global}%</div>

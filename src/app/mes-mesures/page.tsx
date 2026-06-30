@@ -61,7 +61,7 @@ export default async function MesMesures() {
           {mesures.map((m) => {
             const maj = depuis(m.historique[0]?.date ?? null)
             return (
-              <Link key={m.id} href={`/mesures/${m.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link key={m.id} href={`/mesures/${m.id}#mise-a-jour`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="card">
                   <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{m.intitule}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -71,9 +71,9 @@ export default async function MesMesures() {
                   <Barre pourcent={m.avancementPublie} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
                     {maj ? (
-                      <span style={{ fontSize: 11, color: '#9A9AA0' }}>Mis à jour {maj}</span>
+                      <span style={{ fontSize: 11, color: '#6E6E73' }}>Mis à jour {maj}</span>
                     ) : (
-                      <span style={{ fontSize: 11, color: '#9A9AA0' }}>Jamais mis à jour</span>
+                      <span style={{ fontSize: 11, color: '#6E6E73' }}>Jamais mis à jour</span>
                     )}
                     <span style={{ fontSize: 12, color: '#C0461F', fontWeight: 600 }}>Mettre à jour →</span>
                   </div>

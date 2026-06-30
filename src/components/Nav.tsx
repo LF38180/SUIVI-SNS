@@ -7,7 +7,10 @@ export async function Nav() {
   const session = await lireSession()
   if (!session) return null
   const estAdmin = peutValider(session.role)
-  const nbAttente = estAdmin ? await prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }) : 0
+  const nbAttente = estAdmin
+    ? (await prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } })) +
+      (await prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE' } }))
+    : 0
 
   const liens: LienNav[] = []
   if (estAdmin) liens.push({ href: '/admin', label: 'Espace admin', accent: true })
