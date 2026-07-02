@@ -7,23 +7,32 @@ export default function Connexion() {
   const [voirMdp, setVoirMdp] = useState(false)
   const [erreur, setErreur] = useState('')
   const [aide, setAide] = useState(false)
+  const [enCours, setEnCours] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (enCours) return
     setErreur('')
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, motDePasse }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      // Rechargement COMPLET (pas router.push) : la barre de navigation est un
-      // Server Component rendu avant connexion ; un simple push ne la régénère pas
-      // → on force un vrai chargement pour que les onglets apparaissent tout de suite.
-      window.location.href = data.role === 'ADMIN' ? '/admin' : '/mes-mesures'
-    } else {
+    setEnCours(true)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, motDePasse }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        // Rechargement COMPLET (pas router.push) : la barre de navigation est un
+        // Server Component rendu avant connexion ; un simple push ne la régénère pas
+        // → on force un vrai chargement pour que les onglets apparaissent tout de suite.
+        window.location.href = data.role === 'ADMIN' ? '/admin' : '/mes-mesures'
+        return // on garde enCours=true pendant la redirection
+      }
       setErreur('Email ou mot de passe incorrect. Vérifiez le message reçu par mail.')
+      setEnCours(false)
+    } catch {
+      setErreur('Pas de connexion internet — vérifiez votre réseau et réessayez.')
+      setEnCours(false)
     }
   }
 
@@ -80,8 +89,8 @@ export default function Connexion() {
             {erreur}
           </div>
         )}
-        <button type="submit" className="btn primary" style={{ padding: 14, fontSize: 15, minHeight: 48 }}>
-          Se connecter
+        <button type="submit" disabled={enCours} className="btn primary" style={{ padding: 14, fontSize: 15, minHeight: 48, opacity: enCours ? 0.6 : 1 }}>
+          {enCours ? 'Connexion en cours…' : 'Se connecter'}
         </button>
       </form>
 

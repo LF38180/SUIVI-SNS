@@ -13,11 +13,11 @@ export default async function AccueilAdmin() {
 
   const [nbPropsAttente, nbPhotosAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
     prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
-    prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE' } }),
-    prisma.mesure.count(),
+    prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE', deletedAt: null } }),
+    prisma.mesure.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: { actif: true } }),
     prisma.proposition.count({ where: { statut: 'VALIDEE' } }),
-    prisma.mesure.findMany({ select: { avancementPublie: true } }),
+    prisma.mesure.findMany({ where: { deletedAt: null }, select: { avancementPublie: true } }),
     prisma.proposition.findMany({
       where: { statut: 'EN_ATTENTE' },
       include: { mesure: true, auteur: true },

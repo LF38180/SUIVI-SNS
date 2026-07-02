@@ -13,18 +13,21 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
   const session = await lireSession()
   const estAdmin = session ? peutValider(session.role) : false
 
-  const mesure = await prisma.mesure.findUnique({
-    where: { id: Number(id) },
+  const mesure = await prisma.mesure.findFirst({
+    where: { id: Number(id), deletedAt: null },
     include: {
       eluReferent: true,
       adjointRattachement: true,
       coReferents: { include: { user: true } },
-      journalEntrees: { include: { auteur: true }, orderBy: { date: 'desc' } },
+      // journal et historique sont append-only : on borne à 30 pour ne pas alourdir
+      // la page (elle grossirait indéfiniment sur 6 ans de mandat).
+      journalEntrees: { include: { auteur: true }, orderBy: { date: 'desc' }, take: 30 },
       piecesJointes: {
+        where: { deletedAt: null },
         orderBy: { date: 'desc' },
         select: { id: true, type: true, url: true, nomFichier: true, legende: true, statut: true, ajouteeParId: true, ajouteePar: { select: { nom: true } } },
       },
-      historique: { orderBy: { date: 'desc' } },
+      historique: { orderBy: { date: 'desc' }, take: 30 },
       propositions: { where: { statut: 'EN_ATTENTE' }, include: { auteur: true }, orderBy: { creeeLe: 'desc' } },
     },
   })
@@ -36,7 +39,7 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
     if (h.proposeParId) userIds.add(h.proposeParId)
     if (h.valideeParId) userIds.add(h.valideeParId)
   })
-  const users = userIds.size ? await prisma.user.findMany({ where: { id: { in: [...userIds] } } }) : []
+  const users = userIds.size ? await prisma.user.findMany({ where: { id: { in: [...userIds] } }, select: { id: true, nom: true } }) : []
   const nomDe = (uid: number | null) => users.find((u) => u.id === uid)?.nom ?? '—'
 
   // photos : validées pour tous ; l'auteur/admin voient aussi les leurs en attente

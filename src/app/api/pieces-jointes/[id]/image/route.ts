@@ -17,13 +17,25 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   // contenu = data URL "data:<mime>;base64,xxxx"
   const m = blob.contenu.match(/^data:([^;]+);base64,(.*)$/)
   if (!m) return new NextResponse('Format invalide', { status: 415 })
-  const mime = m[1]
+  const mimeSource = m[1].toLowerCase()
   const buffer = Buffer.from(m[2], 'base64')
-  return new NextResponse(new Uint8Array(buffer), {
-    headers: {
-      'Content-Type': mime,
-      // privé : ne pas mettre en cache sur des proxies partagés (donnée interne)
-      'Cache-Control': 'private, max-age=86400',
-    },
-  })
+
+  // Sécurité : ne JAMAIS renvoyer un Content-Type arbitraire fourni par l'uploadeur.
+  // Un DOCUMENT "data:text/html;base64,..." servi en text/html s'exécuterait en
+  // same-origin dans le contexte d'un admin (XSS stocké). On force donc une allowlist :
+  // les types image reconnus sont servis inline ; tout le reste est renvoyé en
+  // octet-stream + Content-Disposition attachment (téléchargé, jamais exécuté).
+  const IMAGES_OK = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']
+  const estImage = IMAGES_OK.includes(mimeSource)
+  const headers: Record<string, string> = {
+    'Content-Type': estImage ? mimeSource : 'application/octet-stream',
+    'X-Content-Type-Options': 'nosniff',
+    // le contenu ne change jamais → cache long + revalidation par ETag (id immuable)
+    'Cache-Control': 'private, max-age=31536000, immutable',
+    ETag: `"pj-${id}"`,
+  }
+  if (!estImage) {
+    headers['Content-Disposition'] = 'attachment'
+  }
+  return new NextResponse(new Uint8Array(buffer), { headers })
 }

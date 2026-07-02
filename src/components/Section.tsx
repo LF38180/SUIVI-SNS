@@ -10,10 +10,10 @@ export function Section({ titre, children, ouvertParDefaut = false }: { titre: s
       <button
         onClick={() => setOuvert((o) => !o)}
         aria-expanded={ouvert}
-        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }}
+        style={{ width: '100%', minHeight: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '13px 0', font: 'inherit' }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#6E6E73' }}>{titre}</span>
-        <span style={{ color: '#C0461F', fontSize: 18 }}>{ouvert ? '−' : '+'}</span>
+        <span style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#5a5a5f' }}>{titre}</span>
+        <span style={{ color: '#C0461F', fontSize: 24, lineHeight: 1 }}>{ouvert ? '−' : '+'}</span>
       </button>
       {ouvert && <div style={{ marginTop: 12 }}>{children}</div>}
     </div>

@@ -8,7 +8,22 @@ import { statutDe, STATUTS } from '@/lib/statut'
 import { CourbeEvolution } from '@/components/CourbeEvolution'
 import { reconstruireCourbe } from '@/lib/evolution'
 import { BoutonImpression } from '@/components/BoutonImpression'
+import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
+
+// La courbe ne change qu'à une validation admin. On la calcule au plus une fois
+// toutes les 5 min (et l'invalidation par tag 'courbe' la régénère à la validation),
+// au lieu de rejouer toute la table Historique à chaque visite.
+const courbeCachee = unstable_cache(
+  async () => {
+    const mesures = await prisma.mesure.findMany({ where: { deletedAt: null }, select: { id: true, avancementPublie: true } })
+    const histo = await prisma.historique.findMany({ orderBy: { date: 'asc' } })
+    const actuels = new Map(mesures.map((m) => [m.id, m.avancementPublie]))
+    return reconstruireCourbe(actuels, histo, mesures.length)
+  },
+  ['courbe-evolution'],
+  { revalidate: 300 },
+)
 
 export default async function TableauDeBord() {
   const mesures = await toutesLesMesures()
@@ -20,9 +35,7 @@ export default async function TableauDeBord() {
   }))
 
   // Courbe d'évolution : moyenne globale reconstituée dans le temps (replay de l'historique)
-  const histo = await prisma.historique.findMany({ orderBy: { date: 'asc' } })
-  const actuels = new Map(mesures.map((m) => [m.id, m.avancementPublie]))
-  const points = reconstruireCourbe(actuels, histo, mesures.length)
+  const points = await courbeCachee()
 
   return (
     <>

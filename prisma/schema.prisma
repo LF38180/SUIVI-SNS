@@ -170,6 +170,10 @@ model JournalEntree {
   date              DateTime @default(now())
   commentaire       String
   avancementAssocie Int?
+
+  // Chargé par mesureId + trié par date à chaque ouverture de fiche (sans cet index,
+  // seq scan sur une table qui grossit à chaque mise à jour proposée).
+  @@index([mesureId, date])
 }
 
 model PieceJointe {
@@ -186,6 +190,8 @@ model PieceJointe {
   date         DateTime  @default(now())
   // Une pièce jointe passe par validation admin avant d'être visible (comme un avancement)
   statut       StatutProposition @default(EN_ATTENTE)
+  // Corbeille : suppression réversible (comme Mesure/User). Aucune donnée n'est perdue.
+  deletedAt    DateTime?
 
   // Le contenu binaire lourd (base64) vit dans une table séparée : les requêtes
   // courantes (liste, fiche) ne le chargent JAMAIS. Sauvegardes plus souples.
@@ -193,6 +199,7 @@ model PieceJointe {
 
   @@index([mesureId])
   @@index([statut])
+  @@index([deletedAt])
 }
 
 // Contenu binaire d'une pièce jointe (data URL base64), isolé pour ne pas alourdir

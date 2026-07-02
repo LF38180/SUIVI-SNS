@@ -68,12 +68,18 @@ export async function lireSession(): Promise<SessionData | null> {
   if (!token) return null
   // import dynamique pour éviter de charger Prisma dans le proxy
   const { prisma } = await import('@/lib/db')
-  const user = await prisma.user.findUnique({
-    where: { id: token.userId },
-    select: { actif: true, role: true, anonymiseLe: true },
-  })
-  if (!user || !user.actif || user.anonymiseLe) return null
-  return { userId: token.userId, role: user.role }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: token.userId },
+      select: { actif: true, role: true, anonymiseLe: true },
+    })
+    if (!user || !user.actif || user.anonymiseLe) return null
+    return { userId: token.userId, role: user.role }
+  } catch {
+    // DB brièvement indisponible : on renvoie null (→ redirection connexion) plutôt
+    // qu'une 500 brute sur toutes les pages authentifiées.
+    return null
+  }
 }
 
 export async function detruireSession() {

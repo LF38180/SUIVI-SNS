@@ -7,17 +7,25 @@ export type PhotoVue = { id: number; mesureIntitule: string; auteur: string; typ
 export function FilePhotos({ photos }: { photos: PhotoVue[] }) {
   const router = useRouter()
   const [enCours, setEnCours] = useState<number | null>(null)
+  const [erreur, setErreur] = useState('')
 
   async function traiter(id: number, action: 'valider' | 'refuser') {
     setEnCours(id)
-    const res = await fetch(`/api/pieces-jointes/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    })
-    setEnCours(null)
-    if (res.ok) router.refresh()
-    else alert('Erreur')
+    setErreur('')
+    try {
+      const res = await fetch(`/api/pieces-jointes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      if (res.ok) router.refresh()
+      else setErreur('Action impossible (photo déjà traitée ?). Rechargez la page.')
+    } catch {
+      setErreur('Pas de connexion — réessayez.')
+    } finally {
+      // finally garantit le dégel des boutons même si le réseau coupe.
+      setEnCours(null)
+    }
   }
 
   if (!photos.length) return null
@@ -25,6 +33,7 @@ export function FilePhotos({ photos }: { photos: PhotoVue[] }) {
   return (
     <div style={{ marginTop: 30 }}>
       <h2 style={{ fontSize: 15, marginBottom: 12 }}>Photos &amp; documents à valider ({photos.length})</h2>
+      {erreur && <div role="alert" style={{ color: '#C0461F', fontSize: 13, marginBottom: 8 }}>{erreur}</div>}
       {photos.map((p) => (
         <div key={p.id} className="card" style={{ borderLeft: '4px solid #C98A1A' }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>{p.mesureIntitule}</div>

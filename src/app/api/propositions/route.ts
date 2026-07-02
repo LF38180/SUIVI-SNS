@@ -19,26 +19,30 @@ export async function POST(req: NextRequest) {
   if (!cible) {
     return NextResponse.json({ erreur: 'Mesure introuvable' }, { status: 404 })
   }
-  const prop = await prisma.proposition.create({
-    data: {
-      mesureId: Number(mesureId),
-      auteurId: session.userId,
-      avancementPropose: av,
-      commentaire: commentaire ? String(commentaire) : null,
-      statut: 'EN_ATTENTE',
-    },
-  })
-  // entrée journal liée à la proposition (traçabilité interne)
-  if (commentaire) {
-    await prisma.journalEntree.create({
+  // Proposition + entrée journal écrites dans UNE transaction : soit les deux, soit
+  // aucune. Évite qu'un incident entre les deux écritures laisse un journal incomplet.
+  const prop = await prisma.$transaction(async (tx) => {
+    const p = await tx.proposition.create({
       data: {
         mesureId: Number(mesureId),
         auteurId: session.userId,
-        commentaire: String(commentaire),
-        avancementAssocie: av,
+        avancementPropose: av,
+        commentaire: commentaire ? String(commentaire) : null,
+        statut: 'EN_ATTENTE',
       },
     })
-  }
+    if (commentaire) {
+      await tx.journalEntree.create({
+        data: {
+          mesureId: Number(mesureId),
+          auteurId: session.userId,
+          commentaire: String(commentaire),
+          avancementAssocie: av,
+        },
+      })
+    }
+    return p
+  })
   // notifier les admins qu'une proposition est à valider
   const mesure = await prisma.mesure.findUnique({ where: { id: Number(mesureId) }, select: { intitule: true } })
   const auteur = await prisma.user.findUnique({ where: { id: session.userId }, select: { nom: true } })

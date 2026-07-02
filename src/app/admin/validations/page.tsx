@@ -26,7 +26,7 @@ export default async function PageValidations() {
   }))
 
   const piecesAttente = await prisma.pieceJointe.findMany({
-    where: { statut: 'EN_ATTENTE' },
+    where: { statut: 'EN_ATTENTE', deletedAt: null },
     include: { mesure: { select: { intitule: true } }, ajouteePar: { select: { nom: true } } },
     orderBy: { date: 'asc' },
   })

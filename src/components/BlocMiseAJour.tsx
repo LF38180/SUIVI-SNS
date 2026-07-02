@@ -58,6 +58,9 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
   const router = useRouter()
   const refCamera = useRef<HTMLInputElement>(null)
   const refGalerie = useRef<HTMLInputElement>(null)
+  // valeur d'avancement déjà envoyée avec succès : évite de « ressusciter » un
+  // brouillon juste après un envoi (l'avancement publié ne change qu'à la validation admin).
+  const refEnvoye = useRef<number | null>(null)
 
   // Restaure un brouillon (% + commentaire ; les photos ne sont pas persistées)
   useEffect(() => {
@@ -77,8 +80,14 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
 
   useEffect(() => {
     try {
-      if (commentaire || av !== avancementActuel) {
+      // On ne sauvegarde un brouillon que s'il y a réellement une saisie NON envoyée.
+      // La condition `av !== refEnvoye.current` empêche de réécrire le brouillon juste
+      // après un envoi réussi (sinon un faux « brouillon restauré » réapparaîtrait).
+      const aSauvegarder = commentaire || (av !== avancementActuel && av !== refEnvoye.current)
+      if (aSauvegarder) {
         localStorage.setItem(cleBrouillon, JSON.stringify({ av, commentaire }))
+      } else {
+        localStorage.removeItem(cleBrouillon)
       }
     } catch {
       /* ignore */
@@ -89,18 +98,45 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
     return Math.max(0, Math.min(100, v))
   }
 
+  // Toute nouvelle saisie annule le « déjà envoyé » : le brouillon redevient légitime.
+  function majAv(v: number) {
+    refEnvoye.current = null
+    setAv(v)
+  }
+  function majCommentaire(v: string) {
+    refEnvoye.current = null
+    setCommentaire(v)
+  }
+
+  const [prepaPhotos, setPrepaPhotos] = useState(false)
   async function ajouterPhotos(files: FileList | null) {
-    if (!files) return
-    const nouvelles: PhotoEnAttente[] = []
-    for (const f of Array.from(files)) {
-      const contenu = await compresser(f)
-      nouvelles.push({ contenu, nom: f.name, mime: f.type.startsWith('image/') ? 'image/jpeg' : f.type })
+    if (!files || prepaPhotos) return
+    setPrepaPhotos(true)
+    try {
+      const nouvelles: PhotoEnAttente[] = []
+      for (const f of Array.from(files)) {
+        const contenu = await compresser(f)
+        // Garde-fou : si la compression a échoué (fichier brut trop lourd), on refuse
+        // proprement côté client au lieu d'envoyer un fichier voué au rejet serveur (413).
+        if (contenu.length > 3_000_000) {
+          setMsg(`« ${f.name} » est trop lourde même après compression. Reprenez-la depuis l’appareil photo ou choisissez-en une plus légère.`)
+          continue
+        }
+        const estImage = contenu.startsWith('data:image/')
+        nouvelles.push({ contenu, nom: f.name, mime: estImage ? 'image/jpeg' : f.type })
+      }
+      if (nouvelles.length) setPhotos((p) => [...p, ...nouvelles])
+    } finally {
+      setPrepaPhotos(false)
     }
-    setPhotos((p) => [...p, ...nouvelles])
   }
 
   const avChange = av !== avancementActuel
   const rienAEnvoyer = !avChange && !commentaire.trim() && photos.length === 0
+
+  // mémorise ce qui a déjà réussi pour qu'un retry (après échec partiel) ne recrée pas
+  // de doublons : la proposition n'est postée qu'une fois, les photos envoyées sont retirées.
+  const refPropEnvoyee = useRef(false)
 
   async function envoyer() {
     if (enCours || rienAEnvoyer) return
@@ -108,24 +144,34 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
     setMsg('')
     setOk(false)
     try {
-      // 1) avancement + commentaire (si changé ou commentaire saisi)
-      if (avChange || commentaire.trim()) {
+      // 1) avancement + commentaire (une seule fois, même en cas de retry)
+      if ((avChange || commentaire.trim()) && !refPropEnvoyee.current) {
         const res = await fetch('/api/propositions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mesureId, avancementPropose: av, commentaire }),
         })
-        if (!res.ok) throw new Error((await res.json()).erreur ?? 'Erreur')
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).erreur ?? 'ERREUR_SERVEUR')
+        refPropEnvoyee.current = true
       }
-      // 2) photos (chacune en attente de validation)
-      for (const ph of photos) {
+      // 2) photos : on retire chaque photo du state dès qu'elle est acceptée,
+      //    ainsi un retry (après échec réseau en cours de boucle) ne renvoie que
+      //    celles qui restent — pas de doublon.
+      const restantes = [...photos]
+      while (restantes.length > 0) {
+        const ph = restantes[0]
         const res = await fetch('/api/pieces-jointes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mesureId, type: 'PHOTO', contenu: ph.contenu, nomFichier: ph.nom, mimeType: ph.mime }),
         })
-        if (!res.ok) throw new Error('Échec envoi photo')
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).erreur ?? 'ERREUR_SERVEUR')
+        restantes.shift()
+        setPhotos([...restantes])
       }
+      // succès total
+      refEnvoye.current = av
+      refPropEnvoyee.current = false
       setOk(true)
       setMsg('Envoyé ✓ Votre mise à jour (avancement et/ou photo) est en attente de validation par un administrateur.')
       setCommentaire('')
@@ -138,7 +184,14 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
       }
       router.refresh()
     } catch (e) {
-      setMsg(e instanceof Error && e.message !== 'Erreur' ? e.message : 'Pas de réseau — votre saisie est gardée sur cet appareil. Réessayez avec du signal.')
+      // Vraie coupure réseau = TypeError (fetch rejette). Sinon message serveur.
+      if (e instanceof TypeError) {
+        setMsg('Pas de connexion — votre % et votre commentaire sont gardés sur cet appareil (pas les photos). Réessayez avec du signal, sans risque de doublon.')
+      } else if (e instanceof Error && e.message && e.message !== 'ERREUR_SERVEUR') {
+        setMsg(e.message)
+      } else {
+        setMsg('Une erreur est survenue. Réessayez ; ce qui a déjà été envoyé ne sera pas dupliqué.')
+      }
     } finally {
       setEnCours(false)
     }
@@ -175,15 +228,15 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
       <Barre pourcent={av} />
       <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
         {PALIERS.map((p) => (
-          <button key={p} type="button" onClick={() => setAv(p)} style={boutonPalier(av === p)}>
+          <button key={p} type="button" onClick={() => majAv(p)} style={boutonPalier(av === p)}>
             {p}%
           </button>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', justifyContent: 'center' }}>
-        <button type="button" onClick={() => setAv(borne(av - 5))} style={btnRond} aria-label="Diminuer de 5">−5</button>
+        <button type="button" onClick={() => majAv(borne(av - 5))} style={btnRond} aria-label="Diminuer de 5">−5</button>
         <span style={{ minWidth: 60, textAlign: 'center', fontWeight: 700 }}>{av}%</span>
-        <button type="button" onClick={() => setAv(borne(av + 5))} style={btnRond} aria-label="Augmenter de 5">+5</button>
+        <button type="button" onClick={() => majAv(borne(av + 5))} style={btnRond} aria-label="Augmenter de 5">+5</button>
       </div>
 
       {/* Mot de l'élu */}
@@ -194,22 +247,47 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
         id="motelu"
         placeholder="Ce qui a avancé, la prochaine étape…"
         value={commentaire}
-        onChange={(e) => setCommentaire(e.target.value)}
+        onChange={(e) => majCommentaire(e.target.value)}
         rows={2}
         style={{ width: '100%', marginTop: 4, padding: 12, border: '1px solid #ECE5DF', borderRadius: 10, font: 'inherit', fontSize: 16 }}
       />
 
       {/* Photos */}
-      <input ref={refCamera} type="file" accept="image/*" capture="environment" hidden onChange={(e) => ajouterPhotos(e.target.files)} />
-      <input ref={refGalerie} type="file" accept="image/*" multiple hidden onChange={(e) => ajouterPhotos(e.target.files)} />
+      <input
+        ref={refCamera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          ajouterPhotos(e.target.files)
+          e.target.value = '' // permet de re-sélectionner le même fichier
+        }}
+      />
+      <input
+        ref={refGalerie}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          ajouterPhotos(e.target.files)
+          e.target.value = ''
+        }}
+      />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-        <button type="button" onClick={() => refCamera.current?.click()} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140 }}>
+        <button type="button" onClick={() => refCamera.current?.click()} disabled={prepaPhotos} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140, fontSize: 14 }}>
           📷 Prendre une photo
         </button>
-        <button type="button" onClick={() => refGalerie.current?.click()} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140 }}>
+        <button type="button" onClick={() => refGalerie.current?.click()} disabled={prepaPhotos} className="btn" style={{ minHeight: 48, flex: 1, minWidth: 140, fontSize: 14 }}>
           🖼️ Choisir des photos
         </button>
       </div>
+      {prepaPhotos && (
+        <div role="status" style={{ marginTop: 8, fontSize: 13, color: '#6E6E73' }}>
+          Préparation des photos…
+        </div>
+      )}
       {photos.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
           {photos.map((ph, i) => (
@@ -220,9 +298,9 @@ export function BlocMiseAJour({ mesureId, avancementActuel }: { mesureId: number
                 type="button"
                 onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
                 aria-label="Retirer cette photo"
-                style={{ position: 'absolute', top: -6, right: -6, background: '#C0461F', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 13 }}
+                style={{ position: 'absolute', top: -10, right: -10, width: 32, height: 32, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                ✕
+                <span style={{ background: '#C0461F', color: '#fff', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>✕</span>
               </button>
             </div>
           ))}

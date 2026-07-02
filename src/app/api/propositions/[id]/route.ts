@@ -24,38 +24,52 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       avancementPublie: prop.mesure.avancementPublie,
       avancementPropose: prop.avancementPropose,
     })
-    await prisma.$transaction([
-      prisma.mesure.update({
-        where: { id: prop.mesureId },
-        data: { avancementPublie: effet.nouveauAvancementPublie },
-      }),
-      // Historique append-only (inaltérabilité §8.5)
-      prisma.historique.create({
-        data: {
-          mesureId: prop.mesureId,
-          ancienPourcent: effet.entreeHistorique.ancienPourcent,
-          nouveauPourcent: effet.entreeHistorique.nouveauPourcent,
-          proposeParId: prop.auteurId,
-          valideeParId: session.userId,
-        },
-      }),
-      prisma.proposition.update({
-        where: { id: prop.id },
-        data: { statut: 'VALIDEE', valideeParId: session.userId, traiteeLe: new Date() },
-      }),
-    ])
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Verrou optimiste : la 1re opération ne passe QUE si la proposition est encore
+        // EN_ATTENTE. Deux admins (ou deux onglets) qui valident en même temps : le second
+        // obtient count=0 → rollback → pas de double entrée Historique (append-only).
+        const verrou = await tx.proposition.updateMany({
+          where: { id: prop.id, statut: 'EN_ATTENTE' },
+          data: { statut: 'VALIDEE', valideeParId: session.userId, traiteeLe: new Date() },
+        })
+        if (verrou.count === 0) throw new Error('DEJA_TRAITEE')
+        await tx.mesure.update({
+          where: { id: prop.mesureId },
+          data: { avancementPublie: effet.nouveauAvancementPublie },
+        })
+        // Historique append-only (inaltérabilité §8.5)
+        await tx.historique.create({
+          data: {
+            mesureId: prop.mesureId,
+            ancienPourcent: effet.entreeHistorique.ancienPourcent,
+            nouveauPourcent: effet.entreeHistorique.nouveauPourcent,
+            proposeParId: prop.auteurId,
+            valideeParId: session.userId,
+          },
+        })
+      })
+    } catch (e) {
+      if (e instanceof Error && e.message === 'DEJA_TRAITEE') {
+        return NextResponse.json({ erreur: 'Proposition déjà traitée' }, { status: 409 })
+      }
+      throw e
+    }
     // notifs : l'auteur est informé, et les autres élus voient la mise à jour du collègue
     const lien = `/mesures/${prop.mesureId}`
     await notifierUser(prop.auteurId, `Votre proposition sur « ${prop.mesure.intitule} » a été validée (${effet.nouveauAvancementPublie}%)`, lien)
     await notifierTousSauf(prop.auteurId, `« ${prop.mesure.intitule} » est passé à ${effet.nouveauAvancementPublie}%`, lien)
-    // régénère la vue publique mise en cache (la donnée publiée a changé)
+    // régénère la vue publique mise en cache (la donnée publiée a changé).
+    // La courbe (unstable_cache, revalidate 5 min) se rafraîchit d'elle-même.
     revalidatePath('/public')
     return NextResponse.json({ ok: true })
   }
 
   if (action === 'refuser') {
-    await prisma.proposition.update({
-      where: { id: prop.id },
+    // Même verrou optimiste que la validation : refus idempotent, pas d'écrasement
+    // d'une proposition déjà validée par un autre admin en concurrence.
+    const verrou = await prisma.proposition.updateMany({
+      where: { id: prop.id, statut: 'EN_ATTENTE' },
       data: {
         statut: 'REFUSEE',
         motifRefus: motifRefus ? String(motifRefus) : null,
@@ -63,6 +77,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         traiteeLe: new Date(),
       },
     })
+    if (verrou.count === 0) {
+      return NextResponse.json({ erreur: 'Proposition déjà traitée' }, { status: 409 })
+    }
     await notifierUser(
       prop.auteurId,
       `Votre proposition sur « ${prop.mesure.intitule} » a été refusée${motifRefus ? ` : ${motifRefus}` : ''}`,

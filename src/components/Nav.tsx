@@ -7,10 +7,15 @@ export async function Nav() {
   const session = await lireSession()
   if (!session) return null
   const estAdmin = peutValider(session.role)
-  const nbAttente = estAdmin
-    ? (await prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } })) +
-      (await prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE' } }))
-    : 0
+  let nbAttente = 0
+  if (estAdmin) {
+    // deux counts en parallèle (une seule latence réseau au lieu de deux)
+    const [nbProps, nbPhotos] = await Promise.all([
+      prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
+      prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE', deletedAt: null } }),
+    ])
+    nbAttente = nbProps + nbPhotos
+  }
 
   const liens: LienNav[] = []
   if (estAdmin) liens.push({ href: '/admin', label: 'Espace admin', accent: true })

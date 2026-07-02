@@ -14,28 +14,38 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
 
   async function ajouter() {
     setMsg('')
-    const res = await fetch('/api/comptes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom, email, motDePasse, role }),
-    })
-    if (res.ok) {
-      setNom('')
-      setEmail('')
-      setMotDePasse('')
-      router.refresh()
-    } else {
-      setMsg((await res.json()).erreur ?? 'Erreur')
+    try {
+      const res = await fetch('/api/comptes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom, email, motDePasse, role }),
+      })
+      if (res.ok) {
+        setNom('')
+        setEmail('')
+        setMotDePasse('')
+        router.refresh()
+      } else {
+        setMsg((await res.json().catch(() => ({}))).erreur ?? 'Erreur')
+      }
+    } catch {
+      setMsg('Pas de connexion — réessayez.')
     }
   }
 
   async function basculer(id: number, actif: boolean) {
-    const res = await fetch('/api/comptes', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, actif: !actif }),
-    })
-    if (res.ok) router.refresh()
+    setMsg('')
+    try {
+      const res = await fetch('/api/comptes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, actif: !actif }),
+      })
+      if (res.ok) router.refresh()
+      else setMsg((await res.json().catch(() => ({}))).erreur ?? 'Action impossible.')
+    } catch {
+      setMsg('Pas de connexion — réessayez.')
+    }
   }
 
   async function reinitMdp(id: number, nom: string) {

@@ -230,7 +230,7 @@ a {
   border: 1px solid var(--line);
   background: #fff;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--dark);
   cursor: pointer;
