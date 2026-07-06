@@ -108,11 +108,11 @@ export type LigneDemo = {
 // Utilisé par toutes les pages /demo/* pour qu'elles partagent EXACTEMENT les mêmes valeurs.
 export async function chargerDemo(): Promise<LigneDemo[]> {
   const mesures = await prisma.mesure.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, statutMesure: 'VALIDEE' },
     orderBy: { ordre: 'asc' },
     include: INCLUDE_RESPONSABLES,
   })
-  return mesures.map((m) => {
+  const reelles = mesures.map((m) => {
     const { responsables, concernes } = separerRoles(m.responsables)
     const noms = [...responsables, ...concernes].map((u) => u.nom)
     return {
@@ -131,6 +131,25 @@ export async function chargerDemo(): Promise<LigneDemo[]> {
       d: genererDemoMesure(m.id, noms),
     }
   })
+
+  // Deux initiatives HORS PROGRAMME fictives, pour montrer en démo « ce qu'on fait
+  // en plus du programme ». Ids négatifs pour ne jamais entrer en collision avec de
+  // vraies mesures. Portées par les premiers élus trouvés (pour des noms réalistes).
+  const premiers = reelles.flatMap((x) => x.resp).slice(0, 3)
+  const initiatives: LigneDemo[] = [
+    { titre: 'Créer un jardin partagé au quartier des Coteaux', besoins: 'Terrain municipal identifié, à aménager avec les habitants.' },
+    { titre: 'Distribution solidaire de fournitures scolaires', besoins: 'Partenariat avec les associations locales.' },
+  ].map((it, i) => {
+    const porteur = premiers[i] ?? premiers[0] ?? { id: -1, nom: 'Un élu' }
+    return {
+      m: { id: -(i + 1), categorie: 'HORS_PROGRAMME', rubrique: 'Initiatives du mandat', intitule: it.titre, natureCout: 'À chiffrer', ordreGrandeur: 'Faible', besoins: it.besoins, limites: null },
+      resp: [{ id: porteur.id, nom: porteur.nom }],
+      conc: [],
+      d: genererDemoMesure(1000 + i, [porteur.nom]),
+    }
+  })
+
+  return [...reelles, ...initiatives]
 }
 
 // Reconstruit une courbe d'évolution démo globale, montante, à partir des avancements

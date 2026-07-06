@@ -26,10 +26,14 @@ export function separerRoles(
   }
 }
 
+// Filtre standard des mesures « qui existent vraiment » : ni en corbeille, ni une
+// initiative hors programme encore en attente / refusée par l'admin.
+export const MESURE_VISIBLE = { deletedAt: null, statutMesure: 'VALIDEE' as const }
+
 // cache() : dédoublonne l'appel dans un même rendu (page + generateMetadata + og-image)
 export const toutesLesMesures = cache(async function toutesLesMesures() {
   return prisma.mesure.findMany({
-    where: { deletedAt: null },
+    where: MESURE_VISIBLE,
     orderBy: { ordre: 'asc' },
     include: {
       ...INCLUDE_RESPONSABLES,
@@ -42,7 +46,7 @@ export const toutesLesMesures = cache(async function toutesLesMesures() {
 // ou dormantes (aucune validation depuis 90 jours). Groupées par référent.
 export async function mesuresASurveiller() {
   const mesures = await prisma.mesure.findMany({
-    where: { deletedAt: null },
+    where: MESURE_VISIBLE,
     include: { ...INCLUDE_RESPONSABLES, historique: { orderBy: { date: 'desc' }, take: 1 } },
   })
   const now = Date.now()
@@ -74,7 +78,7 @@ export async function mesuresASurveiller() {
 // Mesures avec une échéance cible, triées par date. Pour la frise/échéancier admin.
 export async function mesuresAvecEcheance() {
   const mesures = await prisma.mesure.findMany({
-    where: { deletedAt: null, echeanceCible: { not: null } },
+    where: { ...MESURE_VISIBLE, echeanceCible: { not: null } },
     orderBy: { echeanceCible: 'asc' },
     include: INCLUDE_RESPONSABLES,
   })

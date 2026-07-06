@@ -9,12 +9,13 @@ export async function Nav() {
   const estAdmin = peutValider(session.role)
   let nbAttente = 0
   if (estAdmin) {
-    // deux counts en parallèle (une seule latence réseau au lieu de deux)
-    const [nbProps, nbPhotos] = await Promise.all([
+    // counts en parallèle (une seule latence réseau)
+    const [nbProps, nbPhotos, nbInitiatives] = await Promise.all([
       prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
       prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE', deletedAt: null } }),
+      prisma.mesure.count({ where: { deletedAt: null, statutMesure: 'EN_ATTENTE' } }),
     ])
-    nbAttente = nbProps + nbPhotos
+    nbAttente = nbProps + nbPhotos + nbInitiatives
   }
 
   const liens: LienNav[] = []

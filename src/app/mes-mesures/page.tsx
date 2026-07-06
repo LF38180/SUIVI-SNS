@@ -5,6 +5,7 @@ import { EnTete } from '@/components/EnTete'
 import { Barre } from '@/components/Barre'
 import { BadgeStatut } from '@/components/BadgeStatut'
 import { depuis } from '@/lib/requetes'
+import { FormInitiative } from '@/components/FormInitiative'
 import Link from 'next/link'
 
 export default async function MesMesures() {
@@ -16,7 +17,12 @@ export default async function MesMesures() {
   const mesures = await prisma.mesure.findMany({
     where: {
       deletedAt: null,
-      responsables: { some: { userId: session.userId } },
+      OR: [
+        // mesures où l'élu est rattaché (et qui existent : validées)
+        { statutMesure: 'VALIDEE', responsables: { some: { userId: session.userId } } },
+        // ses propres initiatives hors programme, même en attente de validation
+        { proposeeParId: session.userId },
+      ],
     },
     orderBy: { ordre: 'asc' },
     include: {
@@ -40,7 +46,7 @@ export default async function MesMesures() {
   }
 
   // Avancement global du programme (chiffre clé en haut de l'accueil, demandé par le maire)
-  const toutes = await prisma.mesure.findMany({ where: { deletedAt: null, categorie: { not: 'HORS_PROGRAMME' } }, select: { avancementPublie: true } })
+  const toutes = await prisma.mesure.findMany({ where: { deletedAt: null, statutMesure: 'VALIDEE', categorie: { not: 'HORS_PROGRAMME' } }, select: { avancementPublie: true } })
   const global = toutes.length ? Math.round(toutes.reduce((a, m) => a + m.avancementPublie, 0) / toutes.length) : 0
 
   const aujourdhui = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date())
@@ -75,9 +81,12 @@ export default async function MesMesures() {
             const enRetard = ech != null && ech < aujourdhui && m.avancementPublie < 100
             return (
               <Link key={m.id} href={`/mesures/${m.id}#mise-a-jour`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="card" style={{ borderLeft: enRetard ? '4px solid #C0461F' : undefined }}>
+                <div className="card" style={{ borderLeft: enRetard ? '4px solid #C0461F' : m.statutMesure !== 'VALIDEE' ? '4px solid #8A5E0F' : undefined }}>
                   <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>
                     {m.intitule}
+                    {m.categorie === 'HORS_PROGRAMME' && <span style={{ marginLeft: 8, fontSize: 11, color: '#2E6B33', fontWeight: 700 }}>· hors programme</span>}
+                    {m.statutMesure === 'EN_ATTENTE' && <span style={{ marginLeft: 8, fontSize: 11, color: '#8A5E0F', fontWeight: 700 }}>⏳ en attente de validation</span>}
+                    {m.statutMesure === 'REFUSEE' && <span style={{ marginLeft: 8, fontSize: 11, color: '#C0461F', fontWeight: 700 }}>✕ non retenue</span>}
                     {enRetard && <span style={{ marginLeft: 8, fontSize: 12, color: '#C0461F', fontWeight: 700 }}>⚠ en retard</span>}
                   </div>
                   {ech && (
@@ -102,6 +111,9 @@ export default async function MesMesures() {
               </Link>
             )
           })}
+
+          {/* Proposer une initiative hors programme */}
+          <FormInitiative />
         </div>
 
         {/* Suivi de mes propositions (boucle de feedback) */}

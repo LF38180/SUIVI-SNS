@@ -7,8 +7,9 @@ import { BlocMiseAJour } from '@/components/BlocMiseAJour'
 import { Section } from '@/components/Section'
 import { lireSession } from '@/lib/session'
 import { peutProposer, peutValider } from '@/lib/permissions'
-import { INCLUDE_RESPONSABLES, separerRoles } from '@/lib/requetes'
+import { INCLUDE_RESPONSABLES, separerRoles, aujourdhuiParis } from '@/lib/requetes'
 import { BlocChampsElu } from '@/components/BlocChampsElu'
+import { FormJournal } from '@/components/FormJournal'
 
 export default async function FicheMesure({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -32,6 +33,13 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
     },
   })
   if (!mesure) notFound()
+
+  // Une initiative hors programme encore EN_ATTENTE/REFUSEE n'est visible que par
+  // son auteur ou un admin — pas du public tant qu'elle n'est pas validée.
+  if (mesure.statutMesure !== 'VALIDEE') {
+    const estAuteur = session && mesure.proposeeParId === session.userId
+    if (!estAdmin && !estAuteur) notFound()
+  }
 
   // noms pour l'historique
   const userIds = new Set<number>()
@@ -177,12 +185,13 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
           </Section>
         )}
 
-        <Section titre="Journal de bord">
-          {mesure.journalEntrees.length === 0 && <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune entrée.</div>}
+        <Section titre="Journal de bord — suivi des actions" ouvertParDefaut>
+          {peutEditerChamps && <FormJournal mesureId={mesure.id} aujourdhui={aujourdhuiParis()} />}
+          {mesure.journalEntrees.length === 0 && <div style={{ color: '#6E6E73', fontSize: 13 }}>Aucune action notée pour l’instant.</div>}
           {mesure.journalEntrees.map((j) => (
             <div key={j.id} style={{ borderBottom: '1px solid #ECE5DF', padding: '8px 0', fontSize: 13 }}>
-              <b>{j.auteur.nom}</b> <span style={{ color: '#6E6E73' }}>· {j.date.toLocaleDateString('fr-FR')}</span>
-              <div>{j.commentaire}</div>
+              <span style={{ color: '#9A9AA0' }}>{j.date.toLocaleDateString('fr-FR')}</span> — {j.commentaire}
+              <span style={{ color: '#6E6E73' }}> ({j.auteur.nom})</span>
             </div>
           ))}
         </Section>

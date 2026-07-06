@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { EnTete } from '@/components/EnTete'
 import { FileValidation, PropVue } from '@/components/FileValidation'
 import { FilePhotos, PhotoVue } from '@/components/FilePhotos'
+import { FileInitiatives, InitiativeVue } from '@/components/FileInitiatives'
 
 export default async function PageValidations() {
   const session = await lireSession()
@@ -37,12 +38,26 @@ export default async function PageValidations() {
     type: p.type,
   }))
 
-  const total = vues.length + photos.length
+  // Initiatives hors programme proposées par les élus, en attente de validation.
+  const initiativesAttente = await prisma.mesure.findMany({
+    where: { deletedAt: null, statutMesure: 'EN_ATTENTE' },
+    include: { proposeePar: { select: { nom: true } } },
+    orderBy: { ordre: 'asc' },
+  })
+  const initiatives: InitiativeVue[] = initiativesAttente.map((m) => ({
+    id: m.id,
+    intitule: m.intitule,
+    description: m.besoins,
+    auteur: m.proposeePar?.nom ?? '—',
+  }))
+
+  const total = vues.length + photos.length + initiatives.length
 
   return (
     <>
       <EnTete titre="À valider" sousTitre={`${total} en attente`} />
       <div style={{ maxWidth: 880, margin: '20px auto 0', padding: '0 22px 80px' }}>
+        <FileInitiatives initiatives={initiatives} />
         <FileValidation propositions={vues} />
         <FilePhotos photos={photos} />
       </div>

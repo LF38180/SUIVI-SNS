@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { lireSession } from '@/lib/session'
 import { peutGererMesures } from '@/lib/permissions'
 import { audit } from '@/lib/audit'
+import { notifierUser } from '@/lib/notifications'
+import { revalidatePath } from 'next/cache'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await lireSession()
@@ -12,6 +14,40 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   const mesureId = Number(id)
   const body = await req.json()
+
+  // Validation / refus d'une initiative hors programme proposée par un élu.
+  if (body.action === 'valider' || body.action === 'refuser') {
+    const cible = await prisma.mesure.findUnique({
+      where: { id: mesureId },
+      select: { intitule: true, statutMesure: true, proposeeParId: true },
+    })
+    if (!cible) return NextResponse.json({ erreur: 'Introuvable' }, { status: 404 })
+    if (cible.statutMesure !== 'EN_ATTENTE') {
+      return NextResponse.json({ erreur: 'Initiative déjà traitée' }, { status: 409 })
+    }
+    const nouveau = body.action === 'valider' ? 'VALIDEE' : 'REFUSEE'
+    const verrou = await prisma.mesure.updateMany({
+      where: { id: mesureId, statutMesure: 'EN_ATTENTE' },
+      data: { statutMesure: nouveau, motifRefus: body.action === 'refuser' ? (body.motifRefus ? String(body.motifRefus) : null) : null },
+    })
+    if (verrou.count === 0) return NextResponse.json({ erreur: 'Initiative déjà traitée' }, { status: 409 })
+
+    if (cible.proposeeParId) {
+      const mot = body.action === 'valider'
+        ? `Votre initiative « ${cible.intitule} » a été validée et est désormais publiée.`
+        : `Votre initiative « ${cible.intitule} » n'a pas été retenue${body.motifRefus ? ` : ${body.motifRefus}` : ''}.`
+      await notifierUser(cible.proposeeParId, mot, `/mesures/${mesureId}`)
+    }
+    const acteur = await prisma.user.findUnique({ where: { id: session.userId }, select: { nom: true } })
+    await audit({
+      auteurId: session.userId,
+      auteurNom: acteur?.nom ?? 'Admin',
+      action: `initiative.${body.action}`,
+      cible: `Mesure #${mesureId} — ${cible.intitule}`,
+    })
+    if (body.action === 'valider') revalidatePath('/public')
+    return NextResponse.json({ ok: true })
+  }
 
   const data: Record<string, unknown> = {}
   if (typeof body.intitule === 'string') data.intitule = body.intitule

@@ -46,6 +46,7 @@ export default async function VuePublique() {
 
   // fil des dernières avancées publiées
   const dernieres = await prisma.historique.findMany({
+    where: { mesure: { deletedAt: null, statutMesure: 'VALIDEE' } },
     orderBy: { date: 'desc' },
     take: 6,
     include: { mesure: { select: { intitule: true } } },

@@ -14,10 +14,12 @@ export async function POST(req: NextRequest) {
   if (!mesureId || Number.isNaN(av)) {
     return NextResponse.json({ erreur: 'Données invalides' }, { status: 400 })
   }
-  // La mesure doit exister et ne pas être supprimée (évite les propositions orphelines).
-  const cible = await prisma.mesure.findFirst({ where: { id: Number(mesureId), deletedAt: null } })
+  // La mesure doit exister, ne pas être supprimée, ET être validée : on n'accepte pas
+  // de proposition d'avancement sur une initiative encore EN_ATTENTE (sinon son
+  // historique remonterait dans le fil public avant même sa validation).
+  const cible = await prisma.mesure.findFirst({ where: { id: Number(mesureId), deletedAt: null, statutMesure: 'VALIDEE' } })
   if (!cible) {
-    return NextResponse.json({ erreur: 'Mesure introuvable' }, { status: 404 })
+    return NextResponse.json({ erreur: 'Mesure introuvable ou non validée' }, { status: 404 })
   }
   // Proposition + entrée journal écrites dans UNE transaction : soit les deux, soit
   // aucune. Évite qu'un incident entre les deux écritures laisse un journal incomplet.

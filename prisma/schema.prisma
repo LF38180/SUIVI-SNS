@@ -32,6 +32,14 @@ enum StatutProposition {
   REFUSEE
 }
 
+// Cycle de vie d'une mesure (surtout pour les initiatives hors programme proposées
+// par les élus, qui attendent une validation admin avant d'exister).
+enum StatutMesure {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+}
+
 // Situation d'une mesure non encore réalisée (transparence du bilan, §crédibilité).
 enum Situation {
   NORMALE // suit son cours
@@ -94,6 +102,11 @@ model Mesure {
   // Qui a proposé cette mesure hors programme (null pour les 67 engagements du programme).
   proposeeParId Int?
   proposeePar   User? @relation("Proposant", fields: [proposeeParId], references: [id])
+  // Cycle de vie d'une mesure. Les 67 engagements du programme sont VALIDEE.
+  // Une initiative hors programme proposée par un élu naît EN_ATTENTE (validation
+  // admin) puis devient VALIDEE (existe) ou REFUSEE (n'apparaît pas publiquement).
+  statutMesure  StatutMesure @default(VALIDEE)
+  motifRefus    String?
 
   propositions   Proposition[]
   journalEntrees JournalEntree[]
@@ -104,6 +117,7 @@ model Mesure {
 
   @@index([deletedAt])
   @@index([categorie])
+  @@index([statutMesure])
 }
 
 // Modèle à plat : élus rattachés à une mesure. `role` distingue les RESPONSABLES

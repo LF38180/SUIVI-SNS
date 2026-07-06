@@ -11,13 +11,14 @@ export default async function AccueilAdmin() {
   const session = await lireSession()
   if (!session || !peutValider(session.role)) redirect('/')
 
-  const [nbPropsAttente, nbPhotosAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
+  const [nbPropsAttente, nbPhotosAttente, nbInitiativesAttente, nbMesures, nbComptes, nbValidees, mesures, dernieresProps] = await Promise.all([
     prisma.proposition.count({ where: { statut: 'EN_ATTENTE' } }),
     prisma.pieceJointe.count({ where: { statut: 'EN_ATTENTE', deletedAt: null } }),
-    prisma.mesure.count({ where: { deletedAt: null } }),
+    prisma.mesure.count({ where: { deletedAt: null, statutMesure: 'EN_ATTENTE' } }),
+    prisma.mesure.count({ where: { deletedAt: null, statutMesure: 'VALIDEE' } }),
     prisma.user.count({ where: { actif: true } }),
     prisma.proposition.count({ where: { statut: 'VALIDEE' } }),
-    prisma.mesure.findMany({ where: { deletedAt: null }, select: { avancementPublie: true } }),
+    prisma.mesure.findMany({ where: { deletedAt: null, statutMesure: 'VALIDEE' }, select: { avancementPublie: true } }),
     prisma.proposition.findMany({
       where: { statut: 'EN_ATTENTE' },
       include: { mesure: true, auteur: true },
@@ -25,7 +26,7 @@ export default async function AccueilAdmin() {
       take: 5,
     }),
   ])
-  const nbAttente = nbPropsAttente + nbPhotosAttente
+  const nbAttente = nbPropsAttente + nbPhotosAttente + nbInitiativesAttente
   const global = moyenne(mesures.map((m) => m.avancementPublie))
   const surveiller = await mesuresASurveiller()
 

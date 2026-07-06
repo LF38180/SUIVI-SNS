@@ -17,7 +17,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ erreur: 'Non autorisé' }, { status: 401 })
 
   const mesures = await prisma.mesure.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, statutMesure: 'VALIDEE' },
     orderBy: { ordre: 'asc' },
     include: { responsables: { include: { user: { select: { nom: true } } }, orderBy: { role: 'asc' } } },
   })
