@@ -26,10 +26,12 @@ export function ListeMesures({
   mesures,
   referents,
   axeInitial = '',
+  basePath = '/mesures',
 }: {
   mesures: MesureVue[]
   referents: string[]
   axeInitial?: string
+  basePath?: string
 }) {
   const [axe, setAxe] = useState(axeInitial)
   const [ref, setRef] = useState('')
@@ -127,7 +129,7 @@ export function ListeMesures({
                     .map((m) => {
                       numero += 1
                       return (
-                        <Link key={m.id} href={`/mesures/${m.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Link key={m.id} href={`${basePath}/${m.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="card">
                             <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                               <span style={{ color: '#9A9AA0', fontWeight: 700, fontSize: 12 }}>{numero}</span>

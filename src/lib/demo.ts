@@ -3,6 +3,9 @@
 // vraies mesures, sans JAMAIS écrire dans la base (les vrais avancements restent à 0).
 // Déterministe = mêmes valeurs à chaque affichage (seed sur l'id de la mesure).
 
+import { prisma } from '@/lib/db'
+import { INCLUDE_RESPONSABLES, separerRoles } from '@/lib/requetes'
+
 // PRNG simple et déterministe (mulberry32) : une graine → une suite reproductible.
 function rng(seed: number): () => number {
   let a = seed >>> 0
@@ -83,6 +86,51 @@ export function genererDemoMesure(mesureId: number, noms: string[]): MesureDemo 
 
   const derniereMaj = journal.length ? journal[journal.length - 1].date : new Date(DEBUT_MANDAT)
   return { avancement, situation, journal, derniereMaj }
+}
+
+export type LigneDemo = {
+  m: {
+    id: number
+    categorie: string
+    rubrique: string
+    intitule: string
+    natureCout: string | null
+    ordreGrandeur: string | null
+    besoins: string | null
+    limites: string | null
+  }
+  resp: { id: number; nom: string }[]
+  conc: { id: number; nom: string }[]
+  d: MesureDemo
+}
+
+// Charge les vraies mesures (lecture seule) et génère les données démo déterministes.
+// Utilisé par toutes les pages /demo/* pour qu'elles partagent EXACTEMENT les mêmes valeurs.
+export async function chargerDemo(): Promise<LigneDemo[]> {
+  const mesures = await prisma.mesure.findMany({
+    where: { deletedAt: null },
+    orderBy: { ordre: 'asc' },
+    include: INCLUDE_RESPONSABLES,
+  })
+  return mesures.map((m) => {
+    const { responsables, concernes } = separerRoles(m.responsables)
+    const noms = [...responsables, ...concernes].map((u) => u.nom)
+    return {
+      m: {
+        id: m.id,
+        categorie: m.categorie,
+        rubrique: m.rubrique,
+        intitule: m.intitule,
+        natureCout: m.natureCout,
+        ordreGrandeur: m.ordreGrandeur,
+        besoins: m.besoins,
+        limites: m.limites,
+      },
+      resp: responsables.map((u) => ({ id: u.id, nom: u.nom })),
+      conc: concernes.map((u) => ({ id: u.id, nom: u.nom })),
+      d: genererDemoMesure(m.id, noms),
+    }
+  })
 }
 
 // Reconstruit une courbe d'évolution démo globale, montante, à partir des avancements
