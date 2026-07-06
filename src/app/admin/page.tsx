@@ -111,6 +111,10 @@ export default async function AccueilAdmin() {
             <b>🛡️ Journal d’audit</b>
             <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
           </Link>
+          <Link href="/demo" style={{ ...carte, borderColor: '#232326' }}>
+            <b>🎬 Mode démonstration</b>
+            <div style={sousTexte}>Présenter l’outil « en cours de mandat » (données fictives). Idéal pour une réunion.</div>
+          </Link>
           <div style={{ ...carte, opacity: 0.6, cursor: 'default' }}>
             <b>📅 Bilan de mi-mandat</b>
             <div style={sousTexte}>Figer l’état des engagements et générer le dossier. Disponible à l’approche de 2029.</div>
