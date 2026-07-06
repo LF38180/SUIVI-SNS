@@ -11,19 +11,18 @@ export default async function MesMesures() {
   const session = await lireSession()
   if (!session) redirect('/connexion')
 
-  // Mesures où l'élu est référent, adjoint, ou co-référent.
-  // Recalculé à chaque visite → si l'admin change le référent, ça se met à jour tout seul.
+  // Mesures où l'élu est responsable OU concerné (modèle à plat).
+  // Recalculé à chaque visite → si l'admin change les rattachements, ça se met à jour tout seul.
   const mesures = await prisma.mesure.findMany({
     where: {
       deletedAt: null,
-      OR: [
-        { eluReferentId: session.userId },
-        { adjointRattachementId: session.userId },
-        { coReferents: { some: { userId: session.userId } } },
-      ],
+      responsables: { some: { userId: session.userId } },
     },
     orderBy: { ordre: 'asc' },
-    include: { historique: { orderBy: { date: 'desc' }, take: 1 } },
+    include: {
+      historique: { orderBy: { date: 'desc' }, take: 1 },
+      responsables: { where: { userId: session.userId }, select: { role: true } },
+    },
   })
 
   // Mes propositions récentes (pour la boucle de feedback : validée / refusée / en attente)

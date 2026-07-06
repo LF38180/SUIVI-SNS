@@ -7,15 +7,32 @@ export function aujourdhuiParis(): string {
   return new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date())
 }
 
+// Include standard pour charger les élus rattachés (modèle à plat) triés :
+// responsables d'abord (RESPONSABLE < CONCERNE alphabétiquement), puis par nom.
+export const INCLUDE_RESPONSABLES = {
+  responsables: {
+    include: { user: { select: { id: true, nom: true, fonction: true } } },
+    orderBy: [{ role: 'asc' as const }, { user: { nom: 'asc' as const } }],
+  },
+}
+
+// Sépare une liste de rattachements en { responsables, concernes } (noms + ids).
+export function separerRoles(
+  responsables: { role: string; user: { id: number; nom: string; fonction?: string | null } }[],
+) {
+  return {
+    responsables: responsables.filter((r) => r.role === 'RESPONSABLE').map((r) => r.user),
+    concernes: responsables.filter((r) => r.role === 'CONCERNE').map((r) => r.user),
+  }
+}
+
 // cache() : dédoublonne l'appel dans un même rendu (page + generateMetadata + og-image)
 export const toutesLesMesures = cache(async function toutesLesMesures() {
   return prisma.mesure.findMany({
     where: { deletedAt: null },
     orderBy: { ordre: 'asc' },
     include: {
-      eluReferent: true,
-      adjointRattachement: true,
-      coReferents: { include: { user: true } },
+      ...INCLUDE_RESPONSABLES,
       historique: { orderBy: { date: 'desc' }, take: 1 },
     },
   })
@@ -26,7 +43,7 @@ export const toutesLesMesures = cache(async function toutesLesMesures() {
 export async function mesuresASurveiller() {
   const mesures = await prisma.mesure.findMany({
     where: { deletedAt: null },
-    include: { eluReferent: true, historique: { orderBy: { date: 'desc' }, take: 1 } },
+    include: { ...INCLUDE_RESPONSABLES, historique: { orderBy: { date: 'desc' }, take: 1 } },
   })
   const now = Date.now()
   const seuilDormance = 90 * 86400000
@@ -44,12 +61,12 @@ export async function mesuresASurveiller() {
     })
     .filter((x) => x.enRetard || x.dormante)
 
-  // grouper par référent
+  // grouper par 1er responsable (modèle à plat)
   const parReferent = new Map<string, typeof items>()
   for (const it of items) {
-    const nom = it.m.eluReferent?.nom ?? 'Sans référent'
-    if (!parReferent.has(nom)) parReferent.set(nom, [])
-    parReferent.get(nom)!.push(it)
+    const resp = it.m.responsables.find((r) => r.role === 'RESPONSABLE')?.user.nom ?? 'Sans responsable'
+    if (!parReferent.has(resp)) parReferent.set(resp, [])
+    parReferent.get(resp)!.push(it)
   }
   return [...parReferent.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 }
@@ -59,13 +76,13 @@ export async function mesuresAvecEcheance() {
   const mesures = await prisma.mesure.findMany({
     where: { deletedAt: null, echeanceCible: { not: null } },
     orderBy: { echeanceCible: 'asc' },
-    include: { eluReferent: true },
+    include: INCLUDE_RESPONSABLES,
   })
   const aujourdhui = aujourdhuiParis()
   return mesures.map((m) => ({
     id: m.id,
     intitule: m.intitule,
-    referent: m.eluReferent?.nom ?? null,
+    referent: m.responsables.find((r) => r.role === 'RESPONSABLE')?.user.nom ?? null,
     avancementPublie: m.avancementPublie,
     echeance: m.echeanceCible!.toISOString().slice(0, 10),
     enRetard: m.echeanceCible!.toISOString().slice(0, 10) < aujourdhui && m.avancementPublie < 100,

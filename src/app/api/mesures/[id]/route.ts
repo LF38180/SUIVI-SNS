@@ -24,31 +24,29 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (typeof body.limitesPublic === 'boolean') data.limitesPublic = body.limitesPublic
   if (['NORMALE', 'REPORTEE', 'ADAPTEE', 'ABANDONNEE'].includes(body.situation)) data.situation = body.situation
   if (typeof body.situationMotif === 'string') data.situationMotif = body.situationMotif || null
-  if ('eluReferentId' in body) data.eluReferentId = body.eluReferentId ? Number(body.eluReferentId) : null
-  if ('adjointRattachementId' in body)
-    data.adjointRattachementId = body.adjointRattachementId ? Number(body.adjointRattachementId) : null
   if ('echeanceCible' in body)
     data.echeanceCible = body.echeanceCible ? new Date(body.echeanceCible) : null
 
-  // co-référents : si fournis, on remplace l'ensemble
-  const coReferents: number[] | null = Array.isArray(body.coReferentIds)
-    ? body.coReferentIds.map((x: unknown) => Number(x)).filter((n: number) => !Number.isNaN(n))
-    : null
+  // Rattachements (modèle à plat) : si fournis, on remplace l'ensemble.
+  const nettoie = (arr: unknown): number[] =>
+    Array.isArray(arr) ? [...new Set(arr.map((x) => Number(x)).filter((n) => !Number.isNaN(n)))] : []
+  const responsableIds = 'responsableIds' in body ? nettoie(body.responsableIds) : null
+  const concerneIds = 'concerneIds' in body ? nettoie(body.concerneIds) : null
 
   await prisma.$transaction(async (tx) => {
     if (Object.keys(data).length) {
       await tx.mesure.update({ where: { id: mesureId }, data })
     }
-    if (coReferents) {
-      await tx.mesureCoReferent.deleteMany({ where: { mesureId } })
-      // on évite de mettre le référent principal en co-référent en doublon
-      const refId = data.eluReferentId as number | null | undefined
-      const distincts = [...new Set(coReferents)].filter((uid) => uid !== refId)
-      if (distincts.length) {
-        await tx.mesureCoReferent.createMany({
-          data: distincts.map((userId) => ({ mesureId, userId })),
-        })
-      }
+    if (responsableIds !== null || concerneIds !== null) {
+      const resp = responsableIds ?? []
+      // un élu responsable ne peut pas être aussi concerné (responsable l'emporte)
+      const conc = (concerneIds ?? []).filter((uid) => !resp.includes(uid))
+      await tx.mesureResponsable.deleteMany({ where: { mesureId } })
+      const lignes = [
+        ...resp.map((userId) => ({ mesureId, userId, role: 'RESPONSABLE' as const })),
+        ...conc.map((userId) => ({ mesureId, userId, role: 'CONCERNE' as const })),
+      ]
+      if (lignes.length) await tx.mesureResponsable.createMany({ data: lignes })
     }
   })
 

@@ -7,6 +7,8 @@ import { BlocMiseAJour } from '@/components/BlocMiseAJour'
 import { Section } from '@/components/Section'
 import { lireSession } from '@/lib/session'
 import { peutProposer, peutValider } from '@/lib/permissions'
+import { INCLUDE_RESPONSABLES, separerRoles } from '@/lib/requetes'
+import { BlocChampsElu } from '@/components/BlocChampsElu'
 
 export default async function FicheMesure({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,9 +18,7 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
   const mesure = await prisma.mesure.findFirst({
     where: { id: Number(id), deletedAt: null },
     include: {
-      eluReferent: true,
-      adjointRattachement: true,
-      coReferents: { include: { user: true } },
+      ...INCLUDE_RESPONSABLES,
       // journal et historique sont append-only : on borne à 30 pour ne pas alourdir
       // la page (elle grossirait indéfiniment sur 6 ans de mandat).
       journalEntrees: { include: { auteur: true }, orderBy: { date: 'desc' }, take: 30 },
@@ -47,6 +47,12 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
     (p) => p.statut === 'VALIDEE' || estAdmin || (session && p.ajouteeParId === session.userId),
   )
 
+  // Élus rattachés (modèle à plat)
+  const { responsables, concernes } = separerRoles(mesure.responsables)
+  // Un élu rattaché (responsable ou concerné), ou un admin, peut éditer échéance/besoin/coût.
+  const estRattache = session ? mesure.responsables.some((r) => r.user.id === session.userId) : false
+  const peutEditerChamps = estAdmin || estRattache
+
   const label = { fontSize: 12, textTransform: 'uppercase' as const, letterSpacing: '.4px', color: '#6E6E73', fontWeight: 600, marginBottom: 2 }
 
   return (
@@ -71,10 +77,15 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
             </div>
           )}
           <div style={{ marginTop: 12, fontSize: 13 }}>
-            <span style={{ color: '#6E6E73' }}>En charge : </span>
-            {mesure.eluReferent ? <b>{mesure.eluReferent.nom}</b> : <span style={{ color: '#6E6E73' }}>à définir</span>}
-            {mesure.adjointRattachement && <span style={{ color: '#6E6E73' }}> · sous {mesure.adjointRattachement.nom}</span>}
-            {mesure.coReferents.length > 0 && <span style={{ color: '#6E6E73' }}> · avec {mesure.coReferents.map((c) => c.user.nom).join(', ')}</span>}
+            <span style={{ color: '#6E6E73' }}>{responsables.length > 1 ? 'Responsables : ' : 'Responsable : '}</span>
+            {responsables.length ? (
+              <b>{responsables.map((u) => u.nom).join(', ')}</b>
+            ) : (
+              <span style={{ color: '#6E6E73' }}>à définir</span>
+            )}
+            {concernes.length > 0 && (
+              <span style={{ color: '#6E6E73' }}> · avec {concernes.map((u) => u.nom).join(', ')}</span>
+            )}
           </div>
         </div>
 
@@ -117,7 +128,7 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
           <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
             <div>
               <div style={label}>Coût</div>
-              <div style={{ fontSize: 14 }}>{mesure.natureCout} · {mesure.ordreGrandeur}</div>
+              <div style={{ fontSize: 14 }}>{mesure.natureCout ?? '—'}{mesure.ordreGrandeur ? ` · ${mesure.ordreGrandeur}` : ''}</div>
             </div>
             <div>
               <div style={label}>Échéance cible</div>
@@ -141,6 +152,19 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
             </div>
           )}
         </Section>
+
+        {/* Édition du cadre par les élus en charge (échéance / besoins / coût) */}
+        {peutEditerChamps && (
+          <Section titre="Ajuster le cadre (échéance, besoins, coût)">
+            <BlocChampsElu
+              mesureId={mesure.id}
+              echeanceInitiale={mesure.echeanceCible ? mesure.echeanceCible.toISOString().slice(0, 10) : null}
+              besoinsInitial={mesure.besoins}
+              natureCoutInitial={mesure.natureCout}
+              ordreGrandeurInitial={mesure.ordreGrandeur}
+            />
+          </Section>
+        )}
 
         {session && mesure.propositions.length > 0 && (
           <Section titre={`Propositions en attente (${mesure.propositions.length})`}>

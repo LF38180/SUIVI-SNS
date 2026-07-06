@@ -14,18 +14,19 @@ export default async function AdminMesures() {
   if (!session || !peutGererMesures(session.role)) redirect('/')
   const mesures = await prisma.mesure.findMany({
     orderBy: { ordre: 'asc' },
-    include: { eluReferent: true, adjointRattachement: true, coReferents: { include: { user: true } } },
+    include: { responsables: { include: { user: { select: { nom: true } } }, orderBy: { role: 'asc' } } },
   })
 
   // numéro continu 1..N attribué dans l'ordre d'affichage
   let numero = 0
 
   function elusDe(m: (typeof mesures)[number]): string {
-    const noms: string[] = []
-    if (m.eluReferent) noms.push(m.eluReferent.nom)
-    if (m.adjointRattachement) noms.push(m.adjointRattachement.nom)
-    m.coReferents.forEach((c) => noms.push(c.user.nom))
-    return noms.length ? [...new Set(noms)].join(', ') : '—'
+    const resp = m.responsables.filter((r) => r.role === 'RESPONSABLE').map((r) => r.user.nom)
+    const conc = m.responsables.filter((r) => r.role === 'CONCERNE').map((r) => r.user.nom)
+    if (!resp.length && !conc.length) return '—'
+    let s = resp.join(', ')
+    if (conc.length) s += ` (+ ${conc.length} concerné${conc.length > 1 ? 's' : ''})`
+    return s || '—'
   }
 
   return (

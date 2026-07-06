@@ -19,15 +19,16 @@ export async function GET() {
   const mesures = await prisma.mesure.findMany({
     where: { deletedAt: null },
     orderBy: { ordre: 'asc' },
-    include: { eluReferent: true },
+    include: { responsables: { include: { user: { select: { nom: true } } }, orderBy: { role: 'asc' } } },
   })
-  const entete = ['Axe', 'Rubrique', 'Intitulé', 'Référent', 'Coût', 'Ordre de grandeur', 'Avancement', 'Statut']
+  const entete = ['Axe', 'Rubrique', 'Intitulé', 'Responsables', 'Élus concernés', 'Coût', 'Ordre de grandeur', 'Avancement', 'Statut']
   const lignes = mesures.map((m) =>
     [
       NOMS_AXES[m.categorie],
       m.rubrique,
       m.intitule,
-      m.eluReferent?.nom ?? '',
+      m.responsables.filter((r) => r.role === 'RESPONSABLE').map((r) => r.user.nom).join(' / '),
+      m.responsables.filter((r) => r.role === 'CONCERNE').map((r) => r.user.nom).join(' / '),
       m.natureCout ?? '',
       m.ordreGrandeur ?? '',
       `${m.avancementPublie}%`,

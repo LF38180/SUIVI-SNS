@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type UserOpt = { id: number; nom: string }
 
@@ -13,9 +14,8 @@ type MesureEdit = {
   natureCout: string
   ordreGrandeur: string
   echeanceCible: string // yyyy-mm-dd ou ''
-  eluReferentId: number | null
-  adjointRattachementId: number | null
-  coReferentIds: number[]
+  responsableIds: number[]
+  concerneIds: number[]
   coutPublic: boolean
   limitesPublic: boolean
   situation: string
@@ -32,44 +32,60 @@ export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users
     setM((prev) => ({ ...prev, [k]: v }))
   }
 
-  function toggleCoRef(uid: number) {
+  // Un élu ne peut être que dans une seule liste : cocher responsable le retire des
+  // concernés et inversement.
+  function toggleResponsable(uid: number) {
     setM((prev) => ({
       ...prev,
-      coReferentIds: prev.coReferentIds.includes(uid)
-        ? prev.coReferentIds.filter((x) => x !== uid)
-        : [...prev.coReferentIds, uid],
+      responsableIds: prev.responsableIds.includes(uid)
+        ? prev.responsableIds.filter((x) => x !== uid)
+        : [...prev.responsableIds, uid],
+      concerneIds: prev.concerneIds.filter((x) => x !== uid),
+    }))
+  }
+  function toggleConcerne(uid: number) {
+    setM((prev) => ({
+      ...prev,
+      concerneIds: prev.concerneIds.includes(uid)
+        ? prev.concerneIds.filter((x) => x !== uid)
+        : [...prev.concerneIds, uid],
+      responsableIds: prev.responsableIds.filter((x) => x !== uid),
     }))
   }
 
   async function enregistrer() {
     setEnCours(true)
     setMsg('')
-    const res = await fetch(`/api/mesures/${m.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        intitule: m.intitule,
-        rubrique: m.rubrique,
-        besoins: m.besoins,
-        limites: m.limites,
-        natureCout: m.natureCout,
-        ordreGrandeur: m.ordreGrandeur,
-        echeanceCible: m.echeanceCible || null,
-        eluReferentId: m.eluReferentId,
-        adjointRattachementId: m.adjointRattachementId,
-        coReferentIds: m.coReferentIds,
-        coutPublic: m.coutPublic,
-        limitesPublic: m.limitesPublic,
-        situation: m.situation,
-        situationMotif: m.situationMotif,
-      }),
-    })
-    setEnCours(false)
-    if (res.ok) {
-      setMsg('Enregistré.')
-      router.refresh()
-    } else {
-      setMsg((await res.json()).erreur ?? 'Erreur')
+    try {
+      const res = await fetch(`/api/mesures/${m.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intitule: m.intitule,
+          rubrique: m.rubrique,
+          besoins: m.besoins,
+          limites: m.limites,
+          natureCout: m.natureCout,
+          ordreGrandeur: m.ordreGrandeur,
+          echeanceCible: m.echeanceCible || null,
+          responsableIds: m.responsableIds,
+          concerneIds: m.concerneIds,
+          coutPublic: m.coutPublic,
+          limitesPublic: m.limitesPublic,
+          situation: m.situation,
+          situationMotif: m.situationMotif,
+        }),
+      })
+      if (res.ok) {
+        setMsg('Enregistré.')
+        router.refresh()
+      } else {
+        setMsg((await res.json().catch(() => ({}))).erreur ?? 'Erreur')
+      }
+    } catch {
+      setMsg('Pas de connexion — réessayez.')
+    } finally {
+      setEnCours(false)
     }
   }
 
@@ -78,43 +94,32 @@ export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users
 
   return (
     <div className="panel">
+      <Link href="/admin/mesures" style={{ display: 'inline-block', marginBottom: 12, color: '#C0461F', fontWeight: 600, fontSize: 14 }}>
+        ← Retour aux mesures
+      </Link>
+
       <label style={label}>Intitulé</label>
       <input style={input} value={m.intitule} onChange={(e) => set('intitule', e.target.value)} />
 
       <label style={label}>Rubrique</label>
       <input style={input} value={m.rubrique} onChange={(e) => set('rubrique', e.target.value)} />
 
-      <label style={label}>Référent principal</label>
-      <select style={input} value={m.eluReferentId ?? ''} onChange={(e) => set('eluReferentId', e.target.value ? Number(e.target.value) : null)}>
-        <option value="">— aucun —</option>
-        {users.map((u) => (
-          <option key={u.id} value={u.id}>{u.nom}</option>
-        ))}
-      </select>
-
-      <label style={label}>Adjoint de rattachement</label>
-      <select style={input} value={m.adjointRattachementId ?? ''} onChange={(e) => set('adjointRattachementId', e.target.value ? Number(e.target.value) : null)}>
-        <option value="">— aucun —</option>
-        {users.map((u) => (
-          <option key={u.id} value={u.id}>{u.nom}</option>
-        ))}
-      </select>
-
-      <label style={label}>Co-référents (sujets transversaux)</label>
+      <label style={label}>Responsables (portent la mesure — apparaissent dans « Mes mesures »)</label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-        {users.map((u) => {
-          const on = m.coReferentIds.includes(u.id)
-          return (
-            <button
-              key={u.id}
-              type="button"
-              onClick={() => toggleCoRef(u.id)}
-              className={'chip' + (on ? ' on' : '')}
-            >
-              {u.nom}
-            </button>
-          )
-        })}
+        {users.map((u) => (
+          <button key={u.id} type="button" onClick={() => toggleResponsable(u.id)} className={'chip' + (m.responsableIds.includes(u.id) ? ' on' : '')}>
+            {u.nom}
+          </button>
+        ))}
+      </div>
+
+      <label style={label}>Élus concernés (associés — apparaissent aussi dans « Mes mesures »)</label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+        {users.map((u) => (
+          <button key={u.id} type="button" onClick={() => toggleConcerne(u.id)} className={'chip' + (m.concerneIds.includes(u.id) ? ' on' : '')}>
+            {u.nom}
+          </button>
+        ))}
       </div>
 
       <label style={label}>Échéance cible</label>
@@ -164,10 +169,11 @@ export function FormEditionMesure({ mesure, users }: { mesure: MesureEdit; users
         </label>
       </div>
 
-      <div style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={enregistrer} disabled={enCours} className="btn primary">
           {enCours ? 'Enregistrement…' : 'Enregistrer'}
         </button>
+        <Link href="/admin/mesures" className="btn">← Retour aux mesures</Link>
         {msg && <span style={{ fontSize: 13, color: msg === 'Enregistré.' ? '#3A8540' : '#CD5026' }}>{msg}</span>}
       </div>
     </div>

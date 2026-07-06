@@ -55,6 +55,8 @@ model User {
   mesuresReferent Mesure[]           @relation("Referent")
   mesuresAdjoint  Mesure[]           @relation("Adjoint")
   coReferences    MesureCoReferent[]
+  rattachements   MesureResponsable[] @relation("Rattachement")
+  mesuresProposees Mesure[]          @relation("Proposant")
   propositions    Proposition[]      @relation("Auteur")
   validations     Proposition[]      @relation("Validateur")
   journalEntrees  JournalEntree[]
@@ -82,19 +84,45 @@ model Mesure {
   coutPublic    Boolean @default(false)
   limitesPublic Boolean @default(false)
 
+  // Ancien modèle (référent unique / adjoint / co-référents). CONSERVÉ pour ne rien
+  // perdre, mais le code lit désormais `responsables` (modèle à plat ci-dessous).
   eluReferentId         Int?
   eluReferent           User? @relation("Referent", fields: [eluReferentId], references: [id])
   adjointRattachementId Int?
   adjointRattachement   User? @relation("Adjoint", fields: [adjointRattachementId], references: [id])
+
+  // Qui a proposé cette mesure hors programme (null pour les 67 engagements du programme).
+  proposeeParId Int?
+  proposeePar   User? @relation("Proposant", fields: [proposeeParId], references: [id])
 
   propositions   Proposition[]
   journalEntrees JournalEntree[]
   piecesJointes  PieceJointe[]
   historique     Historique[]
   coReferents    MesureCoReferent[]
+  responsables   MesureResponsable[]
 
   @@index([deletedAt])
   @@index([categorie])
+}
+
+// Modèle à plat : élus rattachés à une mesure. `role` distingue les RESPONSABLES
+// (portent la mesure) des élus CONCERNES (associés). Tous apparaissent sur la fiche
+// et voient la mesure dans « Mes mesures ». Remplace référent/adjoint/co-référents.
+model MesureResponsable {
+  mesureId Int
+  mesure   Mesure         @relation(fields: [mesureId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User           @relation("Rattachement", fields: [userId], references: [id])
+  role     RoleSurMesure  @default(RESPONSABLE)
+
+  @@id([mesureId, userId])
+  @@index([userId])
+}
+
+enum RoleSurMesure {
+  RESPONSABLE
+  CONCERNE
 }
 
 // Paramètres globaux de l'application (réglages admin clé/valeur).

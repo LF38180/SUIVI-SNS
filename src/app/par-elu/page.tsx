@@ -8,17 +8,20 @@ type Mesure = Awaited<ReturnType<typeof toutesLesMesures>>[number]
 
 export default async function ParElu() {
   const mesures = await toutesLesMesures()
+  // Une mesure apparaît chez chacun de ses élus rattachés (responsable OU concerné).
   const groupes = new Map<string, Mesure[]>()
   for (const m of mesures) {
-    const nom = m.eluReferent?.nom ?? 'Sans référent'
-    if (!groupes.has(nom)) groupes.set(nom, [])
-    groupes.get(nom)!.push(m)
+    for (const r of m.responsables) {
+      const nom = r.user.nom
+      if (!groupes.has(nom)) groupes.set(nom, [])
+      groupes.get(nom)!.push(m)
+    }
   }
   const tries = [...groupes.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 
   return (
     <>
-      <EnTete titre="Suivi par élu" sousTitre="Ce que chaque référent porte et où il en est." />
+      <EnTete titre="Suivi par élu" sousTitre="Ce que chaque élu porte ou suit, et où il en est." />
       <div style={{ maxWidth: 1180, margin: '20px auto 0', padding: '0 22px 80px' }}>
         {tries.map(([nom, ms]) => (
           <div key={nom} className="panel" style={{ marginBottom: 16 }}>

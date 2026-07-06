@@ -12,7 +12,7 @@ export default async function EditionMesure({ params }: { params: Promise<{ id: 
   const { id } = await params
   const mesure = await prisma.mesure.findUnique({
     where: { id: Number(id) },
-    include: { coReferents: true },
+    include: { responsables: true },
   })
   if (!mesure) notFound()
   const users = await prisma.user.findMany({ where: { actif: true }, orderBy: { nom: 'asc' }, select: { id: true, nom: true } })
@@ -26,9 +26,8 @@ export default async function EditionMesure({ params }: { params: Promise<{ id: 
     natureCout: mesure.natureCout ?? '',
     ordreGrandeur: mesure.ordreGrandeur ?? '',
     echeanceCible: mesure.echeanceCible ? mesure.echeanceCible.toISOString().slice(0, 10) : '',
-    eluReferentId: mesure.eluReferentId,
-    adjointRattachementId: mesure.adjointRattachementId,
-    coReferentIds: mesure.coReferents.map((c) => c.userId),
+    responsableIds: mesure.responsables.filter((r) => r.role === 'RESPONSABLE').map((r) => r.userId),
+    concerneIds: mesure.responsables.filter((r) => r.role === 'CONCERNE').map((r) => r.userId),
     coutPublic: mesure.coutPublic,
     limitesPublic: mesure.limitesPublic,
     situation: mesure.situation,

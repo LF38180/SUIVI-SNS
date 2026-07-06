@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   const max = await prisma.mesure.aggregate({ _max: { ordre: true } })
   const ordre = (max._max.ordre ?? 0) + 1
 
+  const responsableId = body.eluReferentId ? Number(body.eluReferentId) : null
   const mesure = await prisma.mesure.create({
     data: {
       categorie,
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
       ordreGrandeur: body.ordreGrandeur ?? 'À chiffrer',
       avancementPublie: 0,
       ordre,
-      eluReferentId: body.eluReferentId ? Number(body.eluReferentId) : null,
+      responsables: responsableId ? { create: { userId: responsableId, role: 'RESPONSABLE' } } : undefined,
     },
   })
   return NextResponse.json({ ok: true, id: mesure.id })
