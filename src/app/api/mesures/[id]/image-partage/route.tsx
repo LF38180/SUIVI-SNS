@@ -20,11 +20,30 @@ async function police(poids: 400 | 600 | 700) {
   return readFile(join(process.cwd(), 'src/assets/fonts', `Poppins-${poids}.ttf`))
 }
 
+// Tronque proprement un texte trop long pour l'image (évite le débordement).
+function tronquer(t: string, max: number): string {
+  const s = t.trim()
+  return s.length <= max ? s : s.slice(0, max - 1).trimEnd() + '…'
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const mesure = await prisma.mesure.findFirst({
     where: { id: Number(id), deletedAt: null, statutMesure: 'VALIDEE' },
-    select: { intitule: true, avancementPublie: true, categorie: true },
+    select: {
+      intitule: true,
+      avancementPublie: true,
+      categorie: true,
+      // dernière proposition validée AVEC un mot de l'élu → « mot » + date de mise à jour
+      propositions: {
+        where: { statut: 'VALIDEE', commentaire: { not: null } },
+        orderBy: { traiteeLe: 'desc' },
+        take: 1,
+        select: { commentaire: true, traiteeLe: true },
+      },
+      // date de dernière validation (même sans mot) pour « Mis à jour en … »
+      historique: { orderBy: { date: 'desc' }, take: 1, select: { date: true } },
+    },
   })
   if (!mesure) return new Response('Introuvable', { status: 404 })
 
@@ -35,6 +54,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const tenu = pct >= 100
   const horsProg = mesure.categorie === 'HORS_PROGRAMME'
   const etiquette = horsProg ? 'AU-DELÀ DU PROGRAMME' : tenu ? 'ENGAGEMENT TENU' : 'NOTRE PROGRAMME EN ACTION'
+
+  const motElu = mesure.propositions[0]?.commentaire ? tronquer(mesure.propositions[0].commentaire, 160) : null
+  const dateMaj = mesure.propositions[0]?.traiteeLe ?? mesure.historique[0]?.date ?? null
+  const misAJour = dateMaj
+    ? `Mis à jour en ${new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'Europe/Paris' }).format(dateMaj)}`
+    : null
 
   const railW = 860
   const rempli = Math.round((railW * Math.max(0, Math.min(100, pct))) / 100)
@@ -86,6 +111,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           </div>
           <div style={{ display: 'flex', width: 220, height: 8, background: ORANGE, borderRadius: 4, marginTop: 20 }} />
 
+          {/* Mot de l'élu (dernière mise à jour validée) — bloc citation */}
+          {motElu && (
+            <div style={{ display: 'flex', marginTop: 34 }}>
+              <div style={{ display: 'flex', fontSize: 60, fontWeight: 700, color: ORANGE, lineHeight: 1, marginRight: 12 }}>“</div>
+              <div style={{ display: 'flex', fontSize: 30, fontWeight: 400, color: DARK, lineHeight: 1.38, flex: 1 }}>{motElu}</div>
+            </div>
+          )}
+
           {/* Carte blanche : avancement, avec barre d'accent orange à gauche */}
           <div style={{ display: 'flex', marginTop: 'auto' }}>
             <div style={{ display: 'flex', width: 6, background: ORANGE, borderRadius: 3 }} />
@@ -111,9 +144,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             </div>
           </div>
 
-          {/* Pied */}
-          <div style={{ display: 'flex', fontSize: 22, fontWeight: 400, color: GRAY, marginTop: 30 }}>
-            Suivi de notre programme municipal 2026-2032
+          {/* Pied : identité + date de mise à jour */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
+            <div style={{ display: 'flex', fontSize: 22, fontWeight: 400, color: GRAY }}>
+              Suivi de notre programme municipal 2026-2032
+            </div>
+            {misAJour && <div style={{ display: 'flex', fontSize: 20, fontWeight: 500, color: ORANGE }}>{misAJour}</div>}
           </div>
         </div>
       </div>
