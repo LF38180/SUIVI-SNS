@@ -10,6 +10,8 @@ import { peutProposer, peutValider } from '@/lib/permissions'
 import { INCLUDE_RESPONSABLES, separerRoles, aujourdhuiParis } from '@/lib/requetes'
 import { BlocChampsElu } from '@/components/BlocChampsElu'
 import { FormJournal } from '@/components/FormJournal'
+import { BoutonsPartage } from '@/components/BoutonsPartage'
+import { headers } from 'next/headers'
 
 export default async function FicheMesure({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -61,6 +63,12 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
   const estRattache = session ? mesure.responsables.some((r) => r.user.id === session.userId) : false
   const peutEditerChamps = estAdmin || estRattache
 
+  // Origine (https://…) pour construire l'URL publique partagée, déduite de la requête.
+  const h = await headers()
+  const hote = h.get('x-forwarded-host') ?? h.get('host') ?? 'suivi-sns-production.up.railway.app'
+  const protocole = h.get('x-forwarded-proto') ?? 'https'
+  const origine = `${protocole}://${hote}`
+
   const label = { fontSize: 12, textTransform: 'uppercase' as const, letterSpacing: '.4px', color: '#6E6E73', fontWeight: 600, marginBottom: 2 }
 
   return (
@@ -96,6 +104,16 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
             )}
           </div>
         </div>
+
+        {/* Partage / image chartée (mesure publiée uniquement) */}
+        {mesure.statutMesure === 'VALIDEE' && (
+          <BoutonsPartage
+            mesureId={mesure.id}
+            intitule={mesure.intitule}
+            avancement={mesure.avancementPublie}
+            urlPublique={`${origine}/mesures/${mesure.id}`}
+          />
+        )}
 
         {/* BLOC MISE À JOUR — en haut, l'action principale */}
         {session && peutProposer(session.role) && (

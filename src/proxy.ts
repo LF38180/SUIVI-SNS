@@ -7,10 +7,14 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // ressources publiques + api auth toujours accessibles
+  // (l'image de partage d'une mesure est publique : elle ne rend que des mesures
+  //  déjà VALIDEE, et doit être chargeable par les réseaux sans session.)
+  const estImagePartage = /^\/api\/mesures\/\d+\/image-partage$/.test(pathname)
   if (
     CHEMINS_PUBLICS.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
     pathname.startsWith('/api/auth') ||
     pathname === '/api/health' ||
+    estImagePartage ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {

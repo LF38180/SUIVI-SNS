@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react'
 import { Barre } from './Barre'
 import { BadgeStatut } from './BadgeStatut'
+import { BoutonsPartage } from './BoutonsPartage'
 import { statutDe } from '@/lib/statut'
 import { NOMS_AXES } from '@/lib/axes'
 
@@ -75,17 +76,12 @@ export function PublicMesures({ mesures, partageActif }: { mesures: MesurePubliq
                   <Barre pourcent={m.avancementPublie} />
                   {m.majDepuis && <div style={{ fontSize: 11, color: '#9A9AA0', marginTop: 6 }}>Mis à jour {m.majDepuis}</div>}
                   {partageActif && (
-                    <button
-                      onClick={() => {
-                        const url = `${window.location.origin}/public#mesure-${m.id}`
-                        if (navigator.share) navigator.share({ title: m.intitule, url })
-                        else navigator.clipboard?.writeText(url)
-                      }}
-                      className="btn"
-                      style={{ marginTop: 8, fontSize: 12 }}
-                    >
-                      Partager
-                    </button>
+                    <BoutonsPartage
+                      mesureId={m.id}
+                      intitule={m.intitule}
+                      avancement={m.avancementPublie}
+                      urlPublique={typeof window !== 'undefined' ? `${window.location.origin}/mesures/${m.id}` : `/mesures/${m.id}`}
+                    />
                   )}
                 </div>
               ))}
