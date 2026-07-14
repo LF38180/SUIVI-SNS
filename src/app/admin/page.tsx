@@ -112,6 +112,10 @@ export default async function AccueilAdmin() {
             <b>🛡️ Journal d’audit</b>
             <div style={sousTexte}>Trace des actions sensibles : éditions, comptes, suppressions.</div>
           </Link>
+          <Link href="/admin/communication" style={carte}>
+            <b>📣 Communication</b>
+            <div style={sousTexte}>Vignettes réseaux à votre charte : bilan global, mesures phares. À télécharger et publier.</div>
+          </Link>
           <Link href="/demo" style={{ ...carte, borderColor: '#232326' }}>
             <b>🎬 Mode démonstration</b>
             <div style={sousTexte}>Présenter l’outil « en cours de mandat » (données fictives). Idéal pour une réunion.</div>
