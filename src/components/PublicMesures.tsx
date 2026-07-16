@@ -10,6 +10,7 @@ export type MesurePublique = {
   id: number
   categorie: string
   intitule: string
+  description: string | null
   avancementPublie: number
   majDepuis: string | null
 }
@@ -20,6 +21,7 @@ export function PublicMesures({ mesures, partageActif }: { mesures: MesurePubliq
   const [axe, setAxe] = useState('')
   const [stat, setStat] = useState('')
   const [q, setQ] = useState('')
+  const [ouvert, setOuvert] = useState<number | null>(null)
 
   const filtrees = useMemo(
     () =>
@@ -75,6 +77,20 @@ export function PublicMesures({ mesures, partageActif }: { mesures: MesurePubliq
                   </div>
                   <Barre pourcent={m.avancementPublie} />
                   {m.majDepuis && <div style={{ fontSize: 11, color: '#9A9AA0', marginTop: 6 }}>Mis à jour {m.majDepuis}</div>}
+                  {m.description && (
+                    <div style={{ marginTop: 8 }}>
+                      <button
+                        onClick={() => setOuvert(ouvert === m.id ? null : m.id)}
+                        aria-expanded={ouvert === m.id}
+                        style={{ background: 'none', border: 'none', color: '#C0461F', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0 }}
+                      >
+                        {ouvert === m.id ? 'Masquer' : 'Lire l’engagement'} {ouvert === m.id ? '▲' : '▾'}
+                      </button>
+                      {ouvert === m.id && (
+                        <p style={{ fontSize: 13.5, lineHeight: 1.55, color: '#4a4a4f', marginTop: 8 }}>{m.description}</p>
+                      )}
+                    </div>
+                  )}
                   {partageActif && (
                     <BoutonsPartage
                       mesureId={m.id}

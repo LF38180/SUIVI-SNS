@@ -56,6 +56,7 @@ export default async function VuePublique() {
     id: m.id,
     categorie: m.categorie,
     intitule: m.intitule,
+    description: m.description,
     avancementPublie: m.avancementPublie,
     majDepuis: depuis(m.historique[0]?.date ?? null),
   }))

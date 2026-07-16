@@ -115,6 +115,14 @@ export default async function FicheMesure({ params }: { params: Promise<{ id: st
           />
         )}
 
+        {/* Notre engagement — texte du programme */}
+        {mesure.description && (
+          <div className="panel" style={{ marginTop: 18 }}>
+            <h2>Notre engagement</h2>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#3a3a3f', margin: 0 }}>{mesure.description}</p>
+          </div>
+        )}
+
         {/* BLOC MISE À JOUR — en haut, l'action principale */}
         {session && peutProposer(session.role) && (
           <BlocMiseAJour mesureId={mesure.id} avancementActuel={mesure.avancementPublie} />

@@ -43,6 +43,7 @@ async function main() {
         categorie: m.categorie,
         rubrique: m.rubrique,
         intitule: m.intitule,
+        description: m.description ?? null,
         natureCout: m.natureCout,
         ordreGrandeur: m.ordreGrandeur,
         avancementPublie: m.avancementPublie,
