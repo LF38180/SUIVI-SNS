@@ -11,7 +11,9 @@ export default async function PageComptes() {
   const session = await lireSession()
   if (!session || !peutGererComptes(session.role)) redirect('/')
   const users = await prisma.user.findMany({ where: { anonymiseLe: null }, orderBy: { nom: 'asc' } })
-  const vues = users.map((u) => ({ id: u.id, nom: u.nom, email: u.email, role: u.role, actif: u.actif }))
+  const membres = await prisma.groupeMembre.findMany({ where: { groupe: 'MOYENS_GENERAUX' }, select: { userId: true } })
+  const setMG = new Set(membres.map((m) => m.userId))
+  const vues = users.map((u) => ({ id: u.id, nom: u.nom, email: u.email, role: u.role, actif: u.actif, moyensGeneraux: setMG.has(u.id) }))
   const partage = await partageAutorise()
   return (
     <>

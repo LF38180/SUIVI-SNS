@@ -1,6 +1,6 @@
 import { lireSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
-import { peutValider } from '@/lib/permissions'
+import { peutValider, peutAccederMoyensGeneraux } from '@/lib/permissions'
 import { BarreNav, LienNav } from '@/components/BarreNav'
 
 export async function Nav() {
@@ -25,6 +25,8 @@ export async function Nav() {
   liens.push({ href: '/mesures', label: 'Engagements' })
   liens.push({ href: '/par-elu', label: 'Par élu' })
   if (estAdmin) liens.push({ href: '/admin/validations', label: 'À valider', badge: nbAttente })
+  // Entrée réservée au pôle Moyens Généraux (invisible aux autres élus).
+  if (await peutAccederMoyensGeneraux(session)) liens.push({ href: '/moyens-generaux', label: 'Moyens Généraux' })
 
   return <BarreNav liens={liens} />
 }

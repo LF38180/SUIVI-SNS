@@ -70,6 +70,8 @@ model User {
   journalEntrees  JournalEntree[]
   piecesJointes   PieceJointe[]
   notifications   Notification[]
+  groupes         GroupeMembre[]
+  documentsPole   DocumentPole[]
 }
 
 model Mesure {
@@ -266,4 +268,59 @@ model Historique {
 
   @@index([date])
   @@index([mesureId, date])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE « MOYENS GÉNÉRAUX » — groupes de travail + persistance du simulateur.
+// Tout est ADDITIF : nouvelles tables, aucune colonne existante modifiée.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Groupes de travail (sous-ensembles d'élus), indépendants du rôle ADMIN/ELU.
+enum GroupeTravail {
+  MOYENS_GENERAUX
+}
+
+// Appartenance d'un utilisateur à un groupe de travail.
+model GroupeMembre {
+  id        Int           @id @default(autoincrement())
+  groupe    GroupeTravail
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id])
+  ajouteLe  DateTime      @default(now())
+  ajoutePar String?       // nom dénormalisé de l'admin qui a ajouté (audit lisible)
+
+  @@unique([groupe, userId])
+  @@index([userId])
+}
+
+// Document JSON du module (simulateur de prospective).
+// userId = null → document de RÉFÉRENCE du groupe (écrit par l'admin seul).
+// userId renseigné → exemplaire personnel d'un membre.
+model DocumentPole {
+  id         Int           @id @default(autoincrement())
+  groupe     GroupeTravail
+  cle        String        // 'ppi-arbitrages' | 'simulateur-reglages' | 'ppi-donnees'
+  userId     Int?          // null = référence du groupe
+  user       User?         @relation(fields: [userId], references: [id])
+  contenu    Json
+  version    Int           @default(1)
+  modifiePar String
+  modifieLe  DateTime      @updatedAt
+  creeLe     DateTime      @default(now())
+  versions   DocumentPoleVersion[]
+
+  @@unique([groupe, cle, userId])
+}
+
+// Historique append-only d'un document (jamais modifié ni supprimé).
+model DocumentPoleVersion {
+  id         Int          @id @default(autoincrement())
+  documentId Int
+  document   DocumentPole @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    Int
+  contenu    Json
+  auteur     String
+  creeLe     DateTime     @default(now())
+
+  @@unique([documentId, version])
 }

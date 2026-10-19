@@ -63,6 +63,29 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  // Appartenance au pôle Moyens Généraux (case à cocher sur la fiche).
+  if (typeof body.moyensGeneraux === 'boolean') {
+    const cible = await prisma.user.findUnique({ where: { id: Number(id) }, select: { nom: true } })
+    const nomActeur = await acteur(session.userId)
+    if (body.moyensGeneraux) {
+      await prisma.groupeMembre.upsert({
+        where: { groupe_userId: { groupe: 'MOYENS_GENERAUX', userId: Number(id) } },
+        create: { groupe: 'MOYENS_GENERAUX', userId: Number(id), ajoutePar: nomActeur },
+        update: {},
+      })
+    } else {
+      await prisma.groupeMembre.deleteMany({ where: { groupe: 'MOYENS_GENERAUX', userId: Number(id) } })
+    }
+    await audit({
+      auteurId: session.userId,
+      auteurNom: nomActeur,
+      action: body.moyensGeneraux ? 'pole.ajout_membre' : 'pole.retrait_membre',
+      cible: `Compte ${cible?.nom ?? id}`,
+      details: 'Pôle Moyens Généraux',
+    })
+    return NextResponse.json({ ok: true })
+  }
+
   const u = await prisma.user.update({ where: { id: Number(id) }, data: { actif: Boolean(body.actif) } })
   await audit({
     auteurId: session.userId,

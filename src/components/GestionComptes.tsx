@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-type CompteVue = { id: number; nom: string; email: string; role: string; actif: boolean }
+type CompteVue = { id: number; nom: string; email: string; role: string; actif: boolean; moyensGeneraux: boolean }
 
 export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
   const router = useRouter()
@@ -40,6 +40,21 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, actif: !actif }),
+      })
+      if (res.ok) router.refresh()
+      else setMsg((await res.json().catch(() => ({}))).erreur ?? 'Action impossible.')
+    } catch {
+      setMsg('Pas de connexion — réessayez.')
+    }
+  }
+
+  async function basculerMG(id: number, actuel: boolean) {
+    setMsg('')
+    try {
+      const res = await fetch('/api/comptes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, moyensGeneraux: !actuel }),
       })
       if (res.ok) router.refresh()
       else setMsg((await res.json().catch(() => ({}))).erreur ?? 'Action impossible.')
@@ -114,6 +129,10 @@ export function GestionComptes({ comptes }: { comptes: CompteVue[] }) {
             <b style={{ flex: 1 }}>{c.nom}</b>
             <span style={{ color: '#6E6E73' }}>{c.email}</span>
             <span style={{ fontWeight: 600 }}>{c.role}</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#6E6E73', cursor: 'pointer', whiteSpace: 'nowrap' }} title="Accès au module Moyens Généraux">
+              <input type="checkbox" checked={c.moyensGeneraux} onChange={() => basculerMG(c.id, c.moyensGeneraux)} />
+              Pôle MG
+            </label>
             <button onClick={() => basculer(c.id, c.actif)} className="btn">
               {c.actif ? 'Désactiver' : 'Activer'}
             </button>
