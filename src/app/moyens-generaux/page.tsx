@@ -1,15 +1,12 @@
 import { EnTete } from '@/components/EnTete'
 import { exigerMoyensGenerauxPage } from '@/lib/moyens-generaux'
-import { peutValider } from '@/lib/permissions'
 import { lireReference } from '@/lib/documents-pole'
-import { ImportPpiXlsx } from '@/components/ImportPpiXlsx'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AccueilMoyensGeneraux() {
-  const session = await exigerMoyensGenerauxPage() // notFound() si non autorisé
-  const estAdmin = peutValider(session.role)
+  await exigerMoyensGenerauxPage() // notFound() si non autorisé
 
   // Date de dernier chargement du PPI (référence ppi-donnees).
   const refPpi = await lireReference('ppi-donnees')
@@ -38,10 +35,8 @@ export default async function AccueilMoyensGeneraux() {
           {refPpi
             ? <>PPI chargé la dernière fois le <b>{dateFmt(refPpi.modifieLe)}</b> par {refPpi.modifiePar}.</>
             : <>Aucun PPI chargé pour l’instant.</>}
+          {' '}L’import du PPI Excel (.xlsx) se fait dans le simulateur, onglet PPI.
         </div>
-
-        {/* Import Excel (admin) */}
-        {estAdmin && <ImportPpiXlsx />}
 
         <p style={{ fontSize: 12, color: '#9A9AA0', marginTop: 20 }}>
           Vos essais sont enregistrés dans votre exemplaire personnel. Seul l’administrateur publie la référence commune.

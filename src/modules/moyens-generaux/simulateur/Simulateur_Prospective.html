@@ -480,6 +480,7 @@
     <button type="button" id="b_csv_serv">Questions aux services (CSV)</button>
     <label class="presets" style="margin:0"><span style="font-size:14px">Importer des arbitrages</span><input type="file" id="f_arb_import" accept=".json" style="font-size:13px"></label>
     <label class="presets" style="margin:0"><span style="font-size:14px">Charger un PPI mis à jour</span><input type="file" id="f_ppi_import" accept=".json" style="font-size:13px"></label>
+    <label class="presets" id="ppi_xlsx_w" style="margin:0;display:none"><span style="font-size:14px">Importer le PPI Excel de la DRF (.xlsx)</span><input type="file" id="f_ppi_xlsx" accept=".xlsx" style="font-size:13px"></label>
     <button type="button" id="b_ppi_reset">Tout remettre au PPI de la DRF</button>
     <span class="hint" id="ppi_msg" style="margin:0"></span>
   </div>
@@ -1117,7 +1118,8 @@ function confirmInline(btn,msg){ if(btn.dataset.armed){ delete btn.dataset.armed
 async function flushSave(cle){ if(!SAVE_T[cle]) return; clearTimeout(SAVE_T[cle]); SAVE_T[cle]=null; const contenu=cle==='ppi-arbitrages'?PPI:simSnapshot(); const r=await fetch(SIM.api+'/'+cle,{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({contenu,version:VER[cle]||0})}); if(r.ok){ const o=await r.json(); VER[cle]=o.version; } else if(r.status===409){ SIM_BLOCKED=true; throw new Error('document modifié ailleurs, recharger'); } }
 
 function ppiSave(){ if(SIM.api){ apiPut('ppi-arbitrages',PPI); return; } try{ localStorage.setItem('seyssins_ppi_v8',JSON.stringify(PPI)); }catch(e){} }
-function ppiDataSave(){ if(SIM.api){ if(SIM.role==='ADMIN') apiPut('ppi-donnees',PPI_DATA); return; } try{ localStorage.setItem('seyssins_ppidata_v8',JSON.stringify(PPI_DATA)); }catch(e){} }
+let SIM_SKIP_PPIDATA_SAVE=false;   // vrai pendant l'application d'un import .xlsx (l'API a déjà écrit la base)
+function ppiDataSave(){ if(SIM_SKIP_PPIDATA_SAVE) return; if(SIM.api){ if(SIM.role==='ADMIN') apiPut('ppi-donnees',PPI_DATA); return; } try{ localStorage.setItem('seyssins_ppidata_v8',JSON.stringify(PPI_DATA)); }catch(e){} }
 function ppiLoad(){
   if(SIM.api){ const a=REMOTE['ppi-arbitrages']; if(a&&a.contenu&&a.contenu.lines){ PPI={...PPI,...a.contenu}; delete PPI.small; PPI.log=PPI.log||[]; PPI.who=PPI.who||''; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } const d=REMOTE['ppi-donnees']; if(d&&d.contenu&&d.contenu.dep&&d.contenu.years){ Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,d.contenu); } if(!PPI.who&&SIM.user) PPI.who=SIM.user; return; }
   try{ const s=localStorage.getItem('seyssins_ppi_v8')||localStorage.getItem('seyssins_ppi_v7'); if(s){ const o=JSON.parse(s); if(o&&o.lines){ PPI={...PPI,...o}; delete PPI.small; PPI.log=PPI.log||[]; PPI.who=PPI.who||''; PPI.cats=o.cats&&o.cats.length?o.cats:[...DEFCATS]; } } }catch(e){}
@@ -1300,6 +1302,42 @@ function ppiImportFile(f,kind){ const rd=new FileReader(); rd.onload=()=>{ let m
     if(kind==='arb'){ if(o.ppi&&o.ppi.lines){ if(o.data&&o.data.dep) { Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,o.data); ppiDataSave(); } PPI=o.ppi; delete PPI.small; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } else throw 0; }
     else { if(o.dep&&o.years){ const r=applyNewPPI(o); msg=`PPI ${o.version} chargé : ${r.added.length} nouvelle(s), ${r.removed.length} disparue(s), ${r.changed.length} modifiée(s).`; } else throw 0; }
     $('ppi_version').textContent=PPI_DATA.version; ppiChanged(); showDiff(); $('ppi_msg').textContent=msg; }catch(e){ $('ppi_msg').textContent='Fichier non reconnu.'; } setTimeout(()=>$('ppi_msg').textContent='',6000); }; rd.readAsText(f); }
+// Import du PPI Excel (.xlsx) de la DRF, réservé admin : le fichier est envoyé à l'API
+// qui le convertit et l'écrit comme donnée de référence (ppi-donnees) en base. On
+// relit ensuite ppi-donnees et on applique le diff localement via applyNewPPI, sans
+// ré-écrire la base (l'API l'a déjà fait). Les arbitrages (PPI.lines) sont conservés.
+async function ppiImportXlsx(f){
+  if(!SIM.api){ $('ppi_msg').textContent='Import Excel seulement depuis l\'application.'; return; }
+  // En lecture seule (?voir= : on regarde l'exemplaire d'un autre membre), ne jamais écrire la référence.
+  if(SIM.ro){ $('ppi_msg').textContent='Lecture seule : import indisponible ici.'; setTimeout(()=>$('ppi_msg').textContent='',6000); return; }
+  $('ppi_msg').textContent='Conversion du fichier Excel…';
+  try{
+    const fd=new FormData(); fd.append('fichier',f);
+    const res=await fetch(SIM.api+'/import-xlsx',{method:'POST',credentials:'same-origin',body:fd});
+    const d=await res.json().catch(()=>({}));
+    // À partir d'ici la référence est peut-être DÉJÀ écrite en base (ecrireReference côté serveur).
+    if(!res.ok){ $('ppi_msg').textContent=d.erreur||'Import impossible.'; setTimeout(()=>$('ppi_msg').textContent='',8000); return; }
+    // Relire la donnée de référence que l'API vient d'écrire, puis l'appliquer localement.
+    // Tant que le GET n'a pas réussi, on ne touche NI VER NI l'état local : sinon une version
+    // fausse ferait partir la prochaine sauvegarde en 409 (SIM_BLOCKED → arbitrages perdus).
+    let o=null; try{ o=await apiGet('ppi-donnees'); }catch(e){}
+    if(!o||!o.contenu||!o.contenu.dep||!o.contenu.years){
+      $('ppi_msg').textContent='PPI enregistré en base. Recharge la page pour le voir dans le simulateur.';
+      setTimeout(()=>$('ppi_msg').textContent='',10000); return;
+    }
+    // Même règle de version que le loader (l.1100) : une référence partagée garde version 0,
+    // un exemplaire perso garde sa vraie version. Forcer 0 à tort casse la sauvegarde suivante.
+    VER['ppi-donnees']=o.source==='perso'?o.version:0;
+    REMOTE['ppi-donnees']=o;
+    let r;
+    SIM_SKIP_PPIDATA_SAVE=true;                        // applyNewPPI ne doit pas ré-écrire la base
+    try{ r=applyNewPPI(o.contenu); } finally{ SIM_SKIP_PPIDATA_SAVE=false; }  // toujours relâché, même si throw
+    $('ppi_version').textContent=PPI_DATA.version; ppiChanged(); showDiff();
+    const al=d.anomalies>0?` ⚠ ${d.anomalies} montant(s) non lisible(s), à vérifier.`:'';
+    $('ppi_msg').textContent=`PPI ${o.contenu.version} enregistré comme référence : ${r.added.length} nouvelle(s), ${r.removed.length} disparue(s), ${r.changed.length} modifiée(s). Tes arbitrages sont conservés.${al}`;
+  }catch(e){ $('ppi_msg').textContent='Problème d\'affichage après l\'import ('+e.message+'). Si le PPI a été envoyé, recharge la page.'; }
+  setTimeout(()=>$('ppi_msg').textContent='',10000);
+}
 let LOGF='';
 function buildJournal(){ const el=$('logtbl'); if(!el) return; const log=(PPI.log||[]).slice().reverse(); const f=LOGF.toLowerCase(); const rows=log.filter(e=>!f||(e.lieu+' '+e.des+' '+e.champ+' '+e.par+' '+e.avant+' '+e.apres).toLowerCase().includes(f)).slice(0,400);
   $('log_n').textContent=(PPI.log||[]).length+' entrée(s)';
@@ -1316,6 +1354,8 @@ function ppiInit(){
   $('b_csv_serv').addEventListener('click',csvServices);
   $('f_arb_import').addEventListener('change',e=>{ if(e.target.files[0]) ppiImportFile(e.target.files[0],'arb'); e.target.value=''; });
   $('f_ppi_import').addEventListener('change',e=>{ if(e.target.files[0]) ppiImportFile(e.target.files[0],'ppi'); e.target.value=''; });
+  // Import .xlsx réservé admin (même règle que le chargement d'un PPI de référence).
+  if(SIM.api&&SIM.role==='ADMIN'&&!SIM.ro){ const w=$('ppi_xlsx_w'); if(w) w.style.display=''; const fx=$('f_ppi_xlsx'); if(fx) fx.addEventListener('change',e=>{ if(e.target.files[0]) ppiImportXlsx(e.target.files[0]); e.target.value=''; }); }
   let armed=false; const br=$('b_ppi_reset'); const brLab=br.textContent;
   br.addEventListener('click',()=>{ if(!armed){ armed=true; br.textContent='Confirmer : effacer tous les arbitrages ?'; br.style.background='#8a1f1f'; br.style.color='#fff'; $('ppi_msg').textContent='Cases, catégories, montants saisis et commentaires seront effacés. Sauvegarde d\'abord (JSON) si tu veux les garder. Recliquer pour confirmer.'; setTimeout(()=>{ if(armed){ armed=false; br.textContent=brLab; br.style.background=''; br.style.color=''; $('ppi_msg').textContent=''; } },6000); return; } armed=false; br.textContent=brLab; br.style.background=''; br.style.color=''; const keep=PPI.log||[], who=PPI.who; PPI={version:PPI_DATA.version,lines:{},cats:[...DEFCATS],lastDiff:null,log:keep,who}; logChange(null,'Remise à zéro','tous les arbitrages','PPI de la DRF '+PPI_DATA.version); ppiChanged(); showDiff(); $('ppi_msg').textContent='Arbitrages effacés. PPI de la DRF du '+PPI_DATA.version+' conservé.'; setTimeout(()=>$('ppi_msg').textContent='',4000); });
   $('b_cats').addEventListener('click',()=>{ const v=$('cats_in').value.split(',').map(x=>x.trim()).filter(Boolean); if(v.length){ logChange(null,'Liste des catégories',PPI.cats.join(', '),v.join(', ')); PPI.cats=v; ppiChanged(); } });
