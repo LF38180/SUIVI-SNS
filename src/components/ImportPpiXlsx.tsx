@@ -22,7 +22,7 @@ export function ImportPpiXlsx() {
       if (res.ok) {
         setOk(true)
         const alerte = d.anomalies > 0 ? ` ⚠ ${d.anomalies} montant(s) non lisible(s) (cellule texte ou erreur Excel) comptés à 0, à vérifier.` : ''
-        setMsg(`PPI mis à jour (${d.lignes} lignes · ${d.ajoutees} nouvelle(s) · ${d.disparues} disparue(s)).${alerte} Rouvrez le simulateur pour voir les changements.`)
+        setMsg(`PPI mis à jour (${d.lignes} dépenses · ${d.ajoutees} nouvelle(s) · ${d.disparues} disparue(s)).${alerte} Rouvrez le simulateur pour voir les changements.`)
         router.refresh()
       } else {
         setMsg(d.erreur ?? 'Import impossible.')

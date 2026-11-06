@@ -20,7 +20,10 @@ type LignePPI = {
   prio: string; type: string; tiers: string; notif: string; nproj: string
   y: Record<string, number>; coms: Record<string, string>
 }
-export type PpiConverti = { version: string; years: string[]; dep: LignePPI[]; anomalies?: string[] }
+export type PpiConverti = {
+  version: string; years: string[]; dep: LignePPI[]
+  anomalies?: string[]
+}
 
 // ── mini-lecteur ZIP (xlsx) : renvoie une map nom→contenu texte des entrées voulues ──
 function lireZip(buf: Buffer, veut: (nom: string) => boolean): Map<string, string> {
