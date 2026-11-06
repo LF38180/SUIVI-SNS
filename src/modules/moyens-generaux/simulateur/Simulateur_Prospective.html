@@ -277,9 +277,9 @@
   <h2>Scénarios en un clic</h2>
   <p class="hint" id="sim_restored" style="margin:0 0 8px;color:var(--bleu)"></p><div class="presets" id="sim_reset_w" style="display:none;margin:0 0 10px"><button type="button" id="b_sim_reset">Repartir du scénario D, hypothèses par défaut</button></div>
 <div class="scen">
-    <button type="button" id="sc_a"><b>A · Fil de l'eau</b>charges +2 %, pas de PLF, pas d'effort, subventions 100 K€, PPI du 7 octobre<span class="res num" id="r_sc_a"></span></button>
-    <button type="button" id="sc_b"><b>B · Charges +3 %</b>anticipation DRF, PLF 2027 seul, pas d'effort, PPI du 7 octobre<span class="res num" id="r_sc_b"></span></button>
-    <button type="button" id="sc_c"><b>C · Stress</b>charges +3 %, PLF annuel, effort 7 % du 011 puis +3 %/an, PPI du 7 octobre<span class="res num" id="r_sc_c"></span></button>
+    <button type="button" id="sc_a"><b>A · Fil de l'eau</b>charges +2 %, pas de PLF, pas d'effort, subventions 100 K€, PPI complet de la DRF<span class="res num" id="r_sc_a"></span></button>
+    <button type="button" id="sc_b"><b>B · Charges +3 %</b>anticipation DRF, PLF 2027 seul, pas d'effort, PPI complet de la DRF<span class="res num" id="r_sc_b"></span></button>
+    <button type="button" id="sc_c"><b>C · Stress</b>charges +3 %, PLF annuel, effort 7 % du 011 puis +3 %/an, PPI complet de la DRF<span class="res num" id="r_sc_c"></span></button>
     <button type="button" id="sc_d"><b>D · Trajectoire BP 2027</b>charges +2 %, effort 7 % du 011, subventions 30 %, PPI lissé 1,9 M€/an<span class="res num" id="r_sc_d"></span></button>
   </div>
   <div class="hint" style="margin-top:8px">Chaque scénario règle tous les choix. Ensuite, bouger un seul réglage à la fois et regarder le bandeau noir. Sous chaque bouton : l'investissement maximal et la pire année de désendettement, recalculés avec les paramètres en cours.</div>
@@ -331,7 +331,7 @@
   <div class="why">Chaque 100 K€ de subventions annuelles en plus rend environ 125 K€ d'investissement annuel. L'emprunt ne crée pas de capacité, il la déplace dans le temps.</div>
   <div class="lab">Programme d'investissement 2027-2033</div>
   <div class="seg" id="g_mode">
-    <button type="button" data-v="profil">Profil du fichier du 7 octobre</button>
+    <button type="button" data-v="profil">Profil du fichier de la DRF</button>
     <button type="button" data-v="lisse">Montant lissé par an</button>
     <button type="button" data-v="perso">Saisi année par année</button>
     <button type="button" data-v="projets">Projets cochés (onglet PPI)</button>
@@ -341,7 +341,7 @@
     <input type="range" id="s_lisse" min="500" max="3500" step="50" value="2000" aria-label="Investissement lissé">
   </div>
   <div class="slider" id="w_ppi">
-    <div class="top"><b>PPI total 2027-2033, au profil du 7 octobre</b><span class="num" id="v_ppi"></span></div>
+    <div class="top"><b>PPI total 2027-2033, au profil du fichier DRF du <span id="ppi_ver_sl"></span></b><span class="num" id="v_ppi"></span></div>
     <input type="range" id="s_ppi" min="4000" max="13453" step="100" value="13453" aria-label="PPI total">
   </div>
   <div class="hint" id="h_perso" style="display:none">Montants saisis dans l'onglet Détail chiffré, ligne « PPI de l'année ».</div>
@@ -420,7 +420,7 @@
 </details>
   </div>
   <div class="col-right">
-    <div class="cards4"><div class="card"><div class="lbl">Épargne brute 2029</div><div class="val num" id="c_eb29"></div><div class="sub">objectif 1,2 M€ · alerte 0,8 M€</div></div><div class="card"><div class="lbl">Épargne nette 2029</div><div class="val num" id="c_en29"></div><div class="sub">après capital <span id="c_k29"></span></div></div><div class="card"><div class="lbl">Épargne brute 2033</div><div class="val num" id="c_eb33"></div><div class="sub">fin de période</div></div><div class="card"><div class="lbl">Épargne nette 2033</div><div class="val num" id="c_en33"></div><div class="sub">après capital <span id="c_k33"></span></div></div><div class="card"><div class="lbl">Désendettement, pire année</div><div class="val num" id="c_des"></div><div class="sub">plafond interne 8 ans</div></div><div class="card"><div class="lbl">Emprunt nouveau 2027-2033</div><div class="val num" id="c_emp"></div><div class="sub">encours 2033 : <span id="c_enc"></span></div></div><div class="card"><div class="lbl">PPI financé 2027-2033</div><div class="val num" id="c_ppi"></div><div class="sub">fichier du 7 octobre : 13,5 M€</div></div><div class="card"><div class="lbl">Écart PPI demandé / maximum</div><div class="val num" id="c_cut"></div><div class="sub">sur 2027-2033, à réduire, étaler ou financer autrement</div></div></div>
+    <div class="cards4"><div class="card"><div class="lbl">Épargne brute 2029</div><div class="val num" id="c_eb29"></div><div class="sub">objectif 1,2 M€ · alerte 0,8 M€</div></div><div class="card"><div class="lbl">Épargne nette 2029</div><div class="val num" id="c_en29"></div><div class="sub">après capital <span id="c_k29"></span></div></div><div class="card"><div class="lbl">Épargne brute 2033</div><div class="val num" id="c_eb33"></div><div class="sub">fin de période</div></div><div class="card"><div class="lbl">Épargne nette 2033</div><div class="val num" id="c_en33"></div><div class="sub">après capital <span id="c_k33"></span></div></div><div class="card"><div class="lbl">Désendettement, pire année</div><div class="val num" id="c_des"></div><div class="sub">plafond interne 8 ans</div></div><div class="card"><div class="lbl">Emprunt nouveau 2027-2033</div><div class="val num" id="c_emp"></div><div class="sub">encours 2033 : <span id="c_enc"></span></div></div><div class="card"><div class="lbl">PPI financé 2027-2033</div><div class="val num" id="c_ppi"></div><div class="sub" id="c_ppi_ref"></div></div><div class="card"><div class="lbl">Écart PPI demandé / maximum</div><div class="val num" id="c_cut"></div><div class="sub">sur 2027-2033, à réduire, étaler ou financer autrement</div></div></div>
     <section>
   <div class="glabel" id="t_inv">Investissement par an</div>
   <svg id="g_inv" viewBox="0 0 720 260" role="img" aria-label="Investissement annuel"></svg>
@@ -595,7 +595,7 @@
   <h3>Investissement</h3>
   <ul>
     <li>PPI 2026 : 3 500 000 €, soit 2,9 M€ réalisés et 650 K€ de restes à réaliser selon l'atterrissage (taux de réalisation 82 % des 4,1 M€ inscrits, 63 % engagés ou ordonnancés au 10 septembre)</li>
-    <li>PPI 2027-2033 : profil du fichier du 7 octobre 2026 (13 453 270 €, 84 lignes de dépenses), montant lissé, ou saisi année par année</li>
+    <li>PPI 2027-2033 : profil du fichier de la DRF chargé dans l'onglet PPI (montants DRF, année par année), montant lissé, saisi année par année, ou projets cochés</li>
     <li>FCTVA : 11,48 % du PPI de l'année précédente (16,404 % × 70 % d'assiette éligible, à vérifier sur les mandats 2025) · 7,98 % si la baisse du PLF est retenue · régime de versement N-1 à confirmer</li>
     <li>Subventions : montant fixe (défaut 100 K€/an), pourcentage de l'investissement de l'année, ou saisies · RAR 2025 encaissés en 2026 : 435 530 € · encaissement supposé l'année de la dépense, en réalité N+1 à N+2</li>
     <li>Réserve au 31/12/2025 : 2 289 105 €, résultat de clôture du CFU 2025 hors restes à réaliser</li>
@@ -625,6 +625,11 @@ const KA=[735700,648237,640180,250542,231544,235064,238668,242357];
 const IA=[119100,89438,78612,68183,62785,57598,52328,46973];
 const PROFIL=[4811770,1820500,2826000,1049000,1149000,1148000,649000]; // PPI du 7 octobre 2026
 const PROFTOT=13453270;
+// Profil « fichier DRF » = somme, année par année, des montants DRF du PPI chargé (onglet PPI), hors arbitrages.
+// Suit le fichier importé ; PROFIL/PROFTOT ci-dessus ne servent plus que d'amorce avant chargement.
+function profilDRF(){ const dep=(typeof PPI_DATA!=='undefined'&&PPI_DATA.dep)||[]; return Y.slice(1).map(y=>dep.reduce((s,d)=>s+((d.y||{})[String(y)]||0),0)); }
+function profTot(){ return profilDRF().reduce((s,v)=>s+v,0); }
+function profK(){ return Math.round(profTot()/1000); }
 
 // ---------- hypothèses de base, modifiables ----------
 const DEF={
@@ -634,7 +639,7 @@ const DEF={
   c011:2438992, ene:450000, eneReal:364249, c012:5624273, cnraclPas:70242, cnraclMax:210726,
   rif26:44000, rifN:88000, c014:50000, c65:1598507, ccas26:10000, ccasN:20000, c6768:8395,
   taux:4.15, duree:20, enc25:4757332, fdr0:2289105, floor:1000000, fctva:11.48, fctvaBas:7.98,
-  ppi26:3500000, ppi25:2080000, rar26:435530, c011ref:2938000, drfRef:10651061,
+  ppi26:3500000, ppi25:2080000, rar26:435530, sub26:100000, c011ref:2938000, drfRef:10651061,
 };
 const PLAB=[
   ['fisc','Fiscalité TF + THRS 2026 (notifiée)','€'],['rev27','Revalorisation des bases 2027','%'],['revN','Revalorisation des bases après 2027','%/an'],
@@ -647,7 +652,7 @@ const PLAB=[
   ['c014','014 hors FPIC (SRU)','€/an'],['c65','65 hors CCAS RIFSEEP, base 2025 recalée','€'],['ccas26','CCAS RIFSEEP 2026','€'],['ccasN','CCAS RIFSEEP après 2026','€/an'],['c6768','67 + 68','€/an'],
   ['taux','Taux des emprunts nouveaux','%'],['duree','Durée des emprunts nouveaux','ans'],['enc25','Encours de dette au 31/12/2025','€'],
   ['fdr0','Réserve au 31/12/2025 (résultat de clôture hors RAR)','€'],['floor','Réserve minimale à conserver','€'],['fctva','FCTVA, taux effectif actuel','% du PPI N-1'],['fctvaBas','FCTVA, taux effectif abaissé','% du PPI N-1'],
-  ['ppi26','Investissement 2026','€'],['ppi25','Investissement 2025 (pour FCTVA 2026)','€'],['rar26','Subventions RAR 2025 encaissées en 2026','€'],['drfRef','DRF de référence (atterrissage 2026)','€'],
+  ['ppi26','Investissement 2026','€'],['ppi25','Investissement 2025 (pour FCTVA 2026)','€'],['rar26','Subventions RAR 2025 encaissées en 2026','€'],['sub26','Subventions d\'investissement 2026, hors RAR','€'],['drfRef','DRF de référence (atterrissage 2026)','€'],
 ];
 let P={...DEF};
 
@@ -656,14 +661,15 @@ const state={inf:2,cpeb:0,fctvaBaisse:false,ene:true,fpic:true,cal:true,
   mode:'profil',ppi:13453,lisse:2000,
   submode:'fixe',sub:100,subp:30,
   empmode:'auto',em26:1500,cessM:0,cessY:2028,tarifs:false,m012:[]};
-const PY={cess:[6000,6000,6000,6000,6000,6000,6000,6000],ppi:[null,...PROFIL],sub:[null,100000,100000,100000,100000,100000,100000,100000],emp:[null,0,0,0,0,0,0,0],eff:[0,0,0,0,0,0,0,0]};
+const PY={cess:[6000,6000,6000,6000,6000,6000,6000,6000],cessBase:[6000,6000,6000,6000,6000,6000,6000,6000],ppi:[null,...PROFIL],sub:[null,100000,100000,100000,100000,100000,100000,100000],emp:[null,0,0,0,0,0,0,0],eff:[0,0,0,0,0,0,0,0]};
 
-function annuite(M,t,d){return M===0?0:M*t/(1-Math.pow(1+t,-d));}
+function annuite(M,t,d){ if(M===0) return 0; if(!(d>0)) return Infinity; if(!(t>0)) return M/d; return M*t/(1-Math.pow(1+t,-d)); } // durée 0 : tout remboursé l'année suivante ; taux 0 : linéaire (sinon 0/0 = NaN partout)
 function profile(st){
   if(st.mode==='projets'){const t=projetProfile();return [P.ppi26,...Y.slice(1).map(y=>t[String(y)])];}
   if(st.mode==='lisse'){const v=st.lisse*1000;return [P.ppi26,v,v,v,v,v,v,v];}
   if(st.mode==='perso') return [P.ppi26,...PY.ppi.slice(1)];
-  return [P.ppi26,...PROFIL.map(p=>p*(st.ppi*1000/PROFTOT))];
+  // Curseur au maximum = profil exact du fichier (évite l'arrondi au millier du curseur) ; sinon profil réduit à l'échelle.
+  const pr=profilDRF(), tot=profTot()||1; const f=st.ppi>=profK()?1:st.ppi*1000/tot; return [P.ppi26,...pr.map(p=>p*f)];
 }
 function effortOf(st,j,y){
   if(st.effmode==='perso') return PY.eff[j];
@@ -693,7 +699,7 @@ function engine(st,emp,ppiP){
     const eb=rrf-drf, K=KA[j]+kN, en=eb-K;
     const ppi=ppiP[j], ppiPrev=j===0?P.ppi25:ppiP[j-1];
     const fctva=(st.fctvaBaisse?P.fctvaBas:P.fctva)/100*ppiPrev;
-    const subv=j===0?100000:(st.submode==='pct'?st.subp/100*ppi:st.submode==='perso'?PY.sub[j]:st.submode==='ppi'?projetSubv()[String(y)]:st.sub*1000);
+    const subv=j===0?P.sub26:(st.submode==='pct'?st.subp/100*ppi:st.submode==='perso'?PY.sub[j]:st.submode==='ppi'?projetSubv()[String(y)]:st.sub*1000);
     const e=emp[j]||0; if(e>0) loans.push({crd:e,a:annuite(e,t,d),start:y});
     const cess=PY.cess[j];
     const flux=en+fctva+subv+(j===0?P.rar26:0)+cess+e-ppi;
@@ -803,18 +809,19 @@ function buildTable(r){
     ["Désendettement, en années", r.map(x=>x.des>=99?'∞':f1(x.des)+" ans"), 'strong']
   ];
   const C25={"Recettes réelles de fonctionnement":fE(R25.rrf),"Dépenses réelles de fonctionnement":fE(R25.drf),"ÉPARGNE BRUTE":fE(R25.eb),"Taux d'épargne brute":f1(100*R25.eb/R25.rrf)+" %","Capital remboursé":fE(R25.K),"Épargne nette":fE(R25.en),"Encours de dette":fE(R25.enc),"Dette autorisée (8 × épargne brute)":fE(8*R25.eb),"Désendettement, en années":f1(R25.des)+" ans","012 en % des dépenses réelles de fonctionnement":"53,9 %","RÉSERVE fin d'année":fE(P.fdr0)};
-  const SEC=new Set(["dont mesures PLF (en moins)","dont chapitre 011, net de l'effort","dont chapitre 012 (masse salariale)","012 en % des dépenses réelles de fonctionnement","dont chapitre 65","dont intérêts de la dette (66)","Taux d'épargne brute","Capital remboursé","FCTVA","Cessions","Flux vers la réserve","Réserve sans aucun emprunt nouveau","Dette autorisée (8 × épargne brute)"]);
+  const SEC=new Set(["dont mesures PLF (en moins)","dont chapitre 011, net de l'effort","dont chapitre 012 (masse salariale), net des mesures","dont mesures sur le 012 (en moins)","012 en % des dépenses réelles de fonctionnement","dont chapitre 65","dont intérêts de la dette (66)","Taux d'épargne brute","Capital remboursé","FCTVA","Cessions","Flux vers la réserve","Réserve sans aucun emprunt nouveau","Dette autorisée (8 × épargne brute)"]);
   const GRP={"Recettes réelles de fonctionnement":"Fonctionnement","PPI de l'année":"Investissement et financement","Encours de dette":"Dette"};
   let h='<tr><th>Indicateur</th><th style="color:#9aa6a1">2025 réel (CFU)</th>'+Y.map(y=>`<th>${y}</th>`).join('')+'</tr>';
   let g='';
   rows.forEach(([lab,vals,cls])=>{
     if(GRP[lab]){ g=GRP[lab].replace(/\W/g,''); h+=`<tr class="grp"><td colspan="${Y.length+2}"><button type="button" class="grpbtn" data-g="${g}" aria-expanded="${TBL_OPEN[g]?'true':'false'}">${GRP[lab]} <span class="tag">${TBL_OPEN[g]?'masquer le détail':'voir le détail'}</span></button></td></tr>`; }
     const sec=SEC.has(lab); if(sec && !TBL_OPEN[g]) return;
+    const kind0=cls;                         // type de ligne saisissable (ppi/sub/emp/eff/cess), avant l'ajout de la classe « sec »
     cls=(cls||'')+(sec?' sec':'');
     const c25=`<td class="num" style="color:#9aa6a1">${C25[lab]??''}</td>`;
     if(vals===null){
-      const kind=cls;
-      h+=`<tr><td>${lab}<br><span class="tag">${kind==='ppi'?'mode : '+({profil:'profil 7 octobre',lisse:'lissé',perso:'saisi',projets:'projets cochés'})[state.mode]:kind==='sub'?'mode : '+({fixe:'fixe',pct:state.subp+' %',perso:'saisi',ppi:'du PPI'})[state.submode]:kind==='emp'?'mode : '+({auto:'automatique',manuel:'manuel',aucun:'aucun'})[state.empmode]:kind==='cess'?'6 K€/an + cession au curseur':'mode : '+(state.effmode==='perso'?'saisi':'curseurs')}</span></td>`+(kind==='ppi'?`<td class="num" style="color:#9aa6a1">${fE(R25.ppi)}</td>`:c25);
+      const kind=kind0;                      // avant : « cess sec » → la ligne Cessions affichait l'effort et sa saisie était ignorée
+      h+=`<tr><td>${lab}<br><span class="tag">${kind==='ppi'?'mode : '+({profil:'profil DRF',lisse:'lissé',perso:'saisi',projets:'projets cochés'})[state.mode]:kind==='sub'?'mode : '+({fixe:'fixe',pct:state.subp+' %',perso:'saisi',ppi:'du PPI'})[state.submode]:kind==='emp'?'mode : '+({auto:'automatique',manuel:'manuel',aucun:'aucun'})[state.empmode]:kind==='cess'?'6 K€/an + cession au curseur':'mode : '+(state.effmode==='perso'?'saisi':'curseurs')}</span></td>`+(kind==='ppi'?`<td class="num" style="color:#9aa6a1">${fE(R25.ppi)}</td>`:c25);
       r.forEach((x,j)=>{
         const v=kind==='ppi'?x.ppi:kind==='sub'?x.subv:kind==='emp'?x.emp:kind==='cess'?x.cess:x.eff;
         h+= (j===0 && kind!=='eff' && kind!=='cess') ? `<td class="num">${fE(v)}</td>` : inputCell(kind,j,v);
@@ -834,7 +841,7 @@ function buildTable(r){
       if(kind==='sub'){ if(state.submode!=='perso'){ PY.sub=cur.map(x=>x.subv); state.submode='perso'; } PY.sub[j]=v; }
       if(kind==='emp'){ if(state.empmode!=='manuel'){ PY.emp=cur.map(x=>x.emp); state.empmode='manuel'; } PY.emp[j]=v; }
       if(kind==='eff'){ if(state.effmode!=='perso'){ PY.eff=cur.map(x=>x.eff); state.effmode='perso'; } PY.eff[j]=v; }
-      if(kind==='cess'){ PY.cess[j]=v; }
+      if(kind==='cess'){ PY.cessBase=PY.cessBase||Y.map(()=>6000); PY.cessBase[j]=Math.max(0,v-(Y[j]===state.cessY?state.cessM*1000:0)); applyCess(); } // jamais de base négative (l'année du curseur, la saisie ne peut pas descendre sous la cession au curseur)
       syncAll(); clearScen(); render();
     });
   });
@@ -846,7 +853,7 @@ function buildParams(){ buildSources();
   g.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',e=>{
     const k=e.target.dataset.p; const v=parseFloat(String(e.target.value).replace(/\s/g,'').replace(',','.'));
     if(!isNaN(v)){P[k]=v; e.target.value=v.toLocaleString('fr-FR');} else {e.target.value=P[k].toLocaleString('fr-FR');}
-    clearScen(); render();
+    buildSources(); clearScen(); render();
   }));
 }
 
@@ -865,7 +872,7 @@ function lettre(r,mx){
   const empTxt=state.empmode==='aucun'?"Aucun emprunt nouveau n'est mobilisé sur la période : l'investissement est financé par l'épargne nette, le FCTVA, les subventions et les cessions, la réserve absorbant les écarts d'une année sur l'autre."
     :"Le recours à l'emprunt est limité au strict nécessaire pour maintenir une réserve de fonds de roulement de "+fmtK(P.floor)+", soit "+fmtM(empTot)+" sur 2027-2033"+(state.empmode==='manuel'?" selon l'échéancier retenu":"")+". Le taux moyen des emprunts susceptibles d'être mobilisés en 2027 est estimé à "+P.taux.toLocaleString('fr-FR',{maximumFractionDigits:2})+" % sur "+P.duree+" ans, référence de la lettre de cadrage métropolitaine.";
   const cessTxt=cessTot>50000?" Les cessions de patrimoine apportent "+fmtK(cessTot)+" de recettes d'investissement sur la période"+(state.cessM>0?", dont "+fmtK(state.cessM*1000)+" en "+state.cessY+" "+TODO('désigner le bien, par exemple le foncier de l\'école des Îles')+".":"."):" "+TODO('cessions de patrimoine à instruire, école des Îles en premier lieu');
-  const ppiMode=state.mode==='projets'?"Le programme pluriannuel d'investissement retient les projets arbitrés dans l'outil (onglet PPI), à partir du fichier de la DRF du "+PPI_DATA.version:state.mode==='lisse'?"Le programme pluriannuel d'investissement est lissé à "+fmtK(state.lisse*1000)+" par an":state.mode==='profil'?"Le programme pluriannuel d'investissement reprend le profil du fichier du 7 octobre 2026"+(state.ppi<13453?", ramené à "+fmtM(state.ppi*1000):""):"Le programme pluriannuel d'investissement est fixé année par année";
+  const ppiMode=state.mode==='projets'?"Le programme pluriannuel d'investissement retient les projets arbitrés dans l'outil (onglet PPI), à partir du fichier de la DRF du "+PPI_DATA.version:state.mode==='lisse'?"Le programme pluriannuel d'investissement est lissé à "+fmtK(state.lisse*1000)+" par an":state.mode==='profil'?"Le programme pluriannuel d'investissement reprend le profil du fichier de la DRF du "+PPI_DATA.version+(state.ppi*1000<profTot()-500?", ramené à "+fmtM(state.ppi*1000):""):"Le programme pluriannuel d'investissement est fixé année par année";
   const rule=desMax>8||r.some(x=>x.en<0)||Math.min(...r.map(x=>x.fdr))<P.floor;
   return `
   <p style="text-align:right;color:var(--gris)">Seyssins, le ${TODO('date')}</p>
@@ -934,7 +941,7 @@ function render(){
   $('c_en29').textContent=fmtK(r[3].en); $('c_k29').textContent=fmtK(r[3].K); $('c_en33').textContent=fmtK(r[7].en); $('c_k33').textContent=fmtK(r[7].K);
   $('c_en29').style.color=r[3].en<0?'#b23b3b':''; $('c_en33').style.color=r[7].en<0?'#b23b3b':''; $('c_eb33').style.color=eb33<0?'#b23b3b':'';
   $('c_des').textContent=(desMax>=99||desMax>50?'> 50 ans':f1(desMax)+" ans");
-  $('c_emp').textContent=fmtM(empTot); $('c_enc').textContent=fmtM(r[7].enc); $('c_ppi').textContent=fmtM(ppiTot);
+  $('c_emp').textContent=fmtM(empTot); $('c_enc').textContent=fmtM(r[7].enc); $('c_ppi').textContent=fmtM(ppiTot); $('c_ppi_ref').textContent='fichier DRF du '+PPI_DATA.version+' : '+fmtM(profTot());
   const cut=ppiTot-mx*7000; $('c_cut').textContent=cut>0?fmtM(cut):'rien'; $('c_cut').style.color=cut>0?'#b23b3b':'#1f6f4a';
 
   $('b_max').textContent=mx>0?mx.toLocaleString('fr-FR')+" K€ / an":"moins de 300 K€ / an";
@@ -963,9 +970,10 @@ function render(){
   const firstOver=r.slice(1).find(x=>x.des>8);
   $('t_dette').textContent=firstOver?`La dette dépasse huit années d'épargne brute à partir de ${firstOver.y}`:`La dette reste sous huit années d'épargne brute sur toute la période`;
   $('t_des').textContent=`Désendettement : au pire ${desMax>=99?'infini':f1(desMax)+' ans'} (dette ÷ épargne brute, plafond 8 ans, alerte 12 ans)`;
-  const mx0=maxInvest({...state,e27:0,ryt:0,effmode:'curseur',submode:'fixe',sub:100,cessM:0});
+  // « sans effort, sans cession » : effort curseurs ET mesures 012 à zéro, cession au curseur retirée (les cessions courantes restent).
+  const mx0=withPY({cess:(PY.cessBase||Y.map(()=>6000)).slice()},()=>maxInvest({...state,e27:0,ryt:0,effmode:'curseur',m012:[],submode:'fixe',sub:100,cessM:0}));
   $('b_txt').textContent+=" Pour mémoire, avec la même pente mais sans effort, 100 K€ de subventions et sans cession : "+(mx0>0?mx0.toLocaleString('fr-FR')+" K€ par an.":"moins de 300 K€ par an.");
-  for(const [id,patch] of Object.entries(SCEN)){ const st={...state,...patch}; const {m,r:rr,d}=compRow(st,scenPY(st)); $('r_'+id).textContent=(m>0?m.toLocaleString('fr-FR')+' K€/an':'< 300 K€/an')+' · pire année '+(d>50?'> 50 ans':f1(d)+' ans'); }
+  for(const [id,patch] of Object.entries(SCEN)){ const st=scenState(patch); const {m,r:rr,d}=compRow(st,scenPY(st)); $('r_'+id).textContent=(m>0?m.toLocaleString('fr-FR')+' K€/an':'< 300 K€/an')+' · pire année '+(d>50?'> 50 ans':f1(d)+' ans'); }
   buildComp();
   R0=r0; LAST_R=r; buildTable(r);
   $('lettre').innerHTML=lettre(r,mx);
@@ -998,8 +1006,10 @@ function buildM012(){ const el=$('m012tbl'); if(!el) return; const L=state.m012|
   const r=calc(state); const full=(state.m012||[]).reduce((t,e)=>t+(+e.amt||0),0);
   $('v_m012').textContent=L.length?`${fmtK(r[1].m012)} en 2027 · ${fmtK(full)} en année pleine (${f1(100*full/P.drfRef)} % des dépenses réelles de fonctionnement)`:'';
 }
+// Curseur « PPI total » borné au total du fichier DRF chargé ; la valeur en cours est ramenée dans la plage si besoin.
+function ppiSliderSync(){ const s=$('s_ppi'); if(!s) return; const mx=profK(); if(mx>0){ s.max=mx; if(state.ppi>mx) state.ppi=mx; if(+s.min>mx) s.min=mx; } s.value=state.ppi; const v=$('ppi_ver_sl'); if(v) v.textContent=PPI_DATA.version; }
 function syncAll(){
-  syncs.forEach(f=>f());
+  syncs.forEach(f=>f()); ppiSliderSync();
   $('w_lisse').style.display=state.mode==='lisse'?'':'none';
   $('w_ppi').style.display=state.mode==='profil'?'':'none';
   $('h_perso').style.display=state.mode==='perso'?'':'none';
@@ -1007,7 +1017,9 @@ function syncAll(){
   $('w_sub').style.display=state.submode==='fixe'?'':'none';
   $('w_subp').style.display=state.submode==='pct'?'':'none';
 }
-function applyCess(){ PY.cess=PY.cess.map((v,j)=>6000+(Y[j]===state.cessY?state.cessM*1000:0)); }
+// Cessions = base année par année (6 K€, modifiable dans le tableau Détail) + cession au curseur l'année choisie.
+// La base est conservée quand on bouge le curseur ou qu'on applique un scénario.
+function applyCess(){ PY.cessBase=PY.cessBase||Y.map(()=>6000); PY.cess=Y.map((y,j)=>Math.max(0,PY.cessBase[j]||0)+(y===state.cessY?state.cessM*1000:0)); }
 function clearScen(){document.querySelectorAll('.scen button').forEach(b=>b.classList.remove('on'));}
 
 document.querySelectorAll('nav [role=tab]').forEach(b=>{ b.addEventListener('click',()=>{ document.querySelectorAll('nav [role=tab]').forEach(x=>x.setAttribute('aria-selected','false')); b.setAttribute('aria-selected','true'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on')); $('tab-'+b.dataset.tab).classList.add('on'); }); });
@@ -1016,23 +1028,25 @@ document.querySelectorAll('nav [role=tab]').forEach(b=>{ b.addEventListener('cli
   $(id).addEventListener('input',e=>{state[key]=parseFloat(e.target.value); if(key==='e27'||key==='ryt') state.effmode='curseur'; if(key==='cessM'||key==='cessY') applyCess(); syncAll(); clearScen(); render();});
 });
 
+// Un scénario peut demander ppi:'max' = tout le PPI du fichier DRF chargé (valeur calculée au moment de l'application).
+function scenState(patch){ const s={...state,...patch}; if(patch.ppi==='max') s.ppi=profK(); return s; }
 function applyScen(id,patch){
-  Object.assign(state,patch);
+  Object.assign(state,scenState(patch));
   $('s_inf').value=state.inf; $('s_e27').value=state.e27; $('s_ryt').value=state.ryt; $('s_sub').value=state.sub; $('s_subp').value=state.subp;
   $('s_ppi').value=state.ppi; $('s_lisse').value=state.lisse; $('s_em26').value=state.em26; $('s_cessM').value=state.cessM; $('s_cessY').value=state.cessY; applyCess();
   syncAll(); clearScen(); $(id).classList.add('on'); render();
 }
 const BASE={fctvaBaisse:false,ene:true,fpic:true,tarifs:false,effmode:'curseur',empmode:'auto',em26:1500,cessM:0,cessY:2028};
-const SCEN={sc_a:{...BASE,inf:2,cpeb:0,e27:0,ryt:0,submode:'fixe',sub:100,mode:'profil',ppi:13453},
-            sc_b:{...BASE,inf:3,cpeb:1,e27:0,ryt:0,submode:'fixe',sub:100,mode:'profil',ppi:13453},
-            sc_c:{...BASE,inf:3,cpeb:2,e27:210,ryt:90,submode:'fixe',sub:100,mode:'profil',ppi:13453},
+const SCEN={sc_a:{...BASE,inf:2,cpeb:0,e27:0,ryt:0,submode:'fixe',sub:100,mode:'profil',ppi:'max'},
+            sc_b:{...BASE,inf:3,cpeb:1,e27:0,ryt:0,submode:'fixe',sub:100,mode:'profil',ppi:'max'},
+            sc_c:{...BASE,inf:3,cpeb:2,e27:210,ryt:90,submode:'fixe',sub:100,mode:'profil',ppi:'max'},
             sc_d:{...BASE,inf:2,cpeb:0,e27:210,ryt:0,submode:'pct',subp:30,mode:'lisse',lisse:1900}};
 const COMP=[];
 function withPY(py,fn){ const keep={ppi:PY.ppi,sub:PY.sub,emp:PY.emp,eff:PY.eff,cess:PY.cess}; Object.assign(PY,py); try{ return fn(); } finally { Object.assign(PY,keep); } }
-function scenPY(st){ return {ppi:PY.ppi,sub:PY.sub,emp:PY.emp,eff:PY.eff,cess:Y.map(y=>6000+(y===st.cessY?st.cessM*1000:0))}; }
+function scenPY(st){ return {ppi:PY.ppi,sub:PY.sub,emp:PY.emp,eff:PY.eff,cess:Y.map((y,j)=>Math.max(0,(PY.cessBase||[])[j]??6000)+(y===st.cessY?st.cessM*1000:0))}; }
 function compRow(st,py){ return withPY(py,()=>{ const r=calc(st); const m=maxInvest(st); const d=Math.max(...r.slice(1).map(x=>x.des===99?0:x.des)); return {m,r,d}; }); }
 function buildComp(){
-  const cols=[...Object.entries(SCEN).map(([id,p])=>({name:$(id).querySelector('b').textContent,st:{...state,...p},py:scenPY({...state,...p}),fixed:true})),...COMP];
+  const cols=[...Object.entries(SCEN).map(([id,p])=>{ const st=scenState(p); return {name:$(id).querySelector('b').textContent,st,py:scenPY(st),fixed:true}; }),...COMP];
   const vals=cols.map(c=>compRow(c.st,c.py));
   const lines=[
     ['Investissement maximal par an',vals.map(v=>v.m>0?v.m.toLocaleString('fr-FR')+' K€':'< 300 K€')],
@@ -1056,7 +1070,7 @@ function buildComp(){
   $('comptbl').innerHTML=h; $('comp_n').textContent=String(cols.length);
   $('comptbl').querySelectorAll('.rm').forEach(b=>b.addEventListener('click',()=>{COMP.splice(+b.dataset.i,1); buildComp();}));
 }
-$('b_addcomp').addEventListener('click',()=>{ const n=($('comp_name').value||'').trim()||('Réglages '+(COMP.length+1)+' · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})); COMP.push({name:n,st:{...state},py:{ppi:[...PY.ppi],sub:[...PY.sub],emp:[...PY.emp],eff:[...PY.eff],cess:[...PY.cess]}}); $('comp_name').value=''; $('comp_msg').textContent='« '+n+' » ajouté au comparateur.'; setTimeout(()=>$('comp_msg').textContent='',2500); buildComp(); });
+$('b_addcomp').addEventListener('click',()=>{ const n=($('comp_name').value||'').trim()||('Réglages '+(COMP.length+1)+' · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})); COMP.push({name:n,st:{...state,m012:JSON.parse(JSON.stringify(state.m012||[]))},py:{ppi:[...PY.ppi],sub:[...PY.sub],emp:[...PY.emp],eff:[...PY.eff],cess:[...PY.cess]}}); $('comp_name').value=''; $('comp_msg').textContent='« '+n+' » ajouté au comparateur.'; setTimeout(()=>$('comp_msg').textContent='',2500); buildComp(); });
 $('sc_a').addEventListener('click',()=>applyScen('sc_a',SCEN.sc_a));
 $('sc_b').addEventListener('click',()=>applyScen('sc_b',SCEN.sc_b));
 $('sc_c').addEventListener('click',()=>applyScen('sc_c',SCEN.sc_c));
@@ -1165,6 +1179,8 @@ const TRIS={
   y27_desc:['Montant 2027, du plus élevé',(a,b)=>(lineY(b)['2027']||0)-(lineY(a)['2027']||0)||lineTot(b)-lineTot(a)],
 };
 let COMS_OPEN=true;
+let PPI_SHOWN=0, PPI_LIVE_T=null;   // lignes affichées après filtre ; temporisation du rafraîchissement pendant la frappe
+function ppiGrpKey(d){ const [lab]=TRIS[FLT.tri]||TRIS['']; return FLT.tri?'Toutes thématiques · '+lab.toLowerCase():d.th; }
 function passFlt(d){
   if(FLT.th&&d.th!==FLT.th) return false;
   if(FLT.gest&&d.gest!==FLT.gest) return false;
@@ -1201,12 +1217,11 @@ function buildPPI(rebuildFlt=true){
   const NC=yrs.length+11;
   const th=`<tr><th style="min-width:30px">Inclus</th><th style="min-width:320px">Projet · commentaires DRF</th><th>Gest.</th><th title="Devis daté de moins de 12 mois">Devis</th><th title="Besoin d'explication du service">À expl.</th><th>Arbitrage</th>${yrs.map(y=>`<th>${y}</th>`).join('')}<th>Total 27-33</th><th>Après 2033</th><th>Subv. attendue</th><th style="min-width:200px">Mon commentaire</th><th></th></tr>`;
   const [triLab,triCmp]=TRIS[FLT.tri]||TRIS[''];
-  const grpKey=d=>FLT.tri?'Toutes thématiques · '+triLab.toLowerCase():d.th;
-  const grp={}; let shown=0; allLines().filter(passFlt).forEach(d=>{const k=grpKey(d); (grp[k]=grp[k]||[]).push(d); shown++;});
+  const grp={}; let shown=0; allLines().filter(passFlt).forEach(d=>{const k=ppiGrpKey(d); (grp[k]=grp[k]||[]).push(d); shown++;}); PPI_SHOWN=shown;
   let h=th;
   Object.keys(grp).sort().forEach(t=>{
     const gt=grp[t].reduce((s,d)=>s+(lineInc(d)?lineTot(d):0),0);
-    h+=`<tr class="grp"><td colspan="${NC}"><span class="grpbtn" style="cursor:default">${esc(t)}<span class="tag">${grp[t].length} lignes · ${fmtE(gt)} € cochés sur 2027-2033</span></span></td></tr>`;
+    h+=`<tr class="grp" data-th="${esc(t)}"><td colspan="${NC}"><span class="grpbtn" style="cursor:default">${esc(t)}<span class="tag" data-grptot>${grp[t].length} lignes · ${fmtE(gt)} € cochés sur 2027-2033</span></span></td></tr>`;
     grp[t].sort(triCmp).forEach(d=>{
       const o=PPI.lines[d.id]||{}; const cur=lineY(d); const inc=lineInc(d); const tot=lineTot(d); const sub=lineSub(d); const subT=yrs.slice(1).reduce((s,y)=>s+(sub[y]||0),0);
       const coms=COMS_OPEN?drfComs(d):'';
@@ -1218,14 +1233,14 @@ function buildPPI(rebuildFlt=true){
         <td style="text-align:center"><input type="checkbox" data-id="${d.id}" data-k="q" data-q="expl" ${hasQ(d,'expl')?'checked':''} aria-label="À expliquer"></td>
         <td><select data-id="${d.id}" data-k="cat" aria-label="Catégorie"><option value="">—</option>${PPI.cats.map(c=>`<option ${o.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select></td>`;
       yrs.forEach(y=>{ h+= y==='2026'?`<td class="num" style="color:#9aa6a1">${fmtE(cur[y]||0)}</td>`:`<td class="ed"><input type="text" inputmode="numeric" data-id="${d.id}" data-k="y" data-y="${y}" value="${fmtE(cur[y]||0)}" aria-label="${esc(d.lieu)} ${y}"></td>`; });
-      h+=`<td class="num"><b>${fmtE(tot)}</b></td><td class="num" style="color:#9aa6a1">${o.apres?fmtE(o.apres):''}</td><td class="ed"><input type="text" inputmode="numeric" data-id="${d.id}" data-k="subT" value="${fmtE(subT)}" aria-label="Subvention attendue ${esc(d.lieu)}"></td>
+      h+=`<td class="num"><b data-tot="${d.id}">${fmtE(tot)}</b></td><td class="num" style="color:#9aa6a1">${o.apres?fmtE(o.apres):''}</td><td class="ed"><input type="text" inputmode="numeric" data-id="${d.id}" data-k="subT" value="${fmtE(subT)}" aria-label="Subvention attendue ${esc(d.lieu)}"></td>
         <td class="ed"><input type="text" data-id="${d.id}" data-k="com" value="${esc(o.com)}" style="text-align:left;font-family:inherit" aria-label="Mon commentaire"></td>
         <td style="white-space:nowrap"><button type="button" class="mini" data-id="${d.id}" data-k="shift" title="Décaler d'un an">+1 an</button> <button type="button" class="mini" data-id="${d.id}" data-k="reset" title="Revenir au PPI de la DRF">↺</button></td></tr>`;
     });
   });
-  h+=`<tr class="strong"><td></td><td>TOTAL des projets cochés (toutes lignes)</td><td></td><td></td><td></td><td></td>${yrs.map(y=>`<td class="num">${fmtE(prof[y])}</td>`).join('')}<td class="num">${fmtE(yrs.slice(1).reduce((s,y)=>s+prof[y],0))}</td><td></td><td class="num">${fmtE(yrs.slice(1).reduce((s,y)=>s+projetSubv()[y],0))}</td><td></td><td></td></tr>`;
+  h+=`<tr class="strong"><td></td><td>TOTAL des projets cochés (toutes lignes)</td><td></td><td></td><td></td><td></td>${yrs.map(y=>`<td class="num" data-tot-y="${y}">${fmtE(prof[y])}</td>`).join('')}<td class="num" data-tot-y="tot">${fmtE(yrs.slice(1).reduce((s,y)=>s+prof[y],0))}</td><td></td><td class="num" data-tot-y="sub">${fmtE(yrs.slice(1).reduce((s,y)=>s+projetSubv()[y],0))}</td><td></td><td></td></tr>`;
   const base={}; yrs.forEach(y=>base[y]=PPI_DATA.dep.reduce((s,d)=>s+d.y[y],0));
-  h+=`<tr><td></td><td style="color:var(--gris)">PPI de la DRF, ${esc(PPI_DATA.version)}, somme des lignes<br><span class="tag">le récapitulatif DRF affiche 13 453 270 € : écart de formule de 15 000 € sur 2027, signalé à la DRF</span></td><td></td><td></td><td></td><td></td>${yrs.map(y=>`<td class="num" style="color:var(--gris)">${fmtE(base[y])}</td>`).join('')}<td class="num" style="color:var(--gris)">${fmtE(yrs.slice(1).reduce((s,y)=>s+base[y],0))}</td><td></td><td></td><td></td><td></td></tr>`;
+  h+=`<tr><td></td><td style="color:var(--gris)">PPI de la DRF, ${esc(PPI_DATA.version)}, somme des lignes${PPI_DATA.version==='7 octobre 2026'?'<br><span class="tag">le récapitulatif DRF affiche 13 453 270 € : écart de formule de 15 000 € sur 2027, signalé à la DRF</span>':''}</td><td></td><td></td><td></td><td></td>${yrs.map(y=>`<td class="num" style="color:var(--gris)">${fmtE(base[y])}</td>`).join('')}<td class="num" style="color:var(--gris)">${fmtE(yrs.slice(1).reduce((s,y)=>s+base[y],0))}</td><td></td><td></td><td></td><td></td></tr>`;
   const ae=document.activeElement; const keep=(ae&&el.contains(ae)&&ae.dataset)?{id:ae.dataset.id,k:ae.dataset.k,y:ae.dataset.y,q:ae.dataset.q}:null;
   el.innerHTML=h; setTimeout(fixHdr,0);
   if(keep&&keep.k){ const sel=`[data-k="${keep.k}"]`+(keep.id?`[data-id="${keep.id}"]`:'')+(keep.y?`[data-y="${keep.y}"]`:'')+(keep.q?`[data-q="${keep.q}"]`:''); const nx=el.querySelector(sel); if(nx){ nx.focus(); if(nx.select) nx.select(); } }
@@ -1233,15 +1248,35 @@ function buildPPI(rebuildFlt=true){
   el.querySelectorAll('input[type=checkbox][data-k=inc]').forEach(c=>c.addEventListener('change',()=>{ const d=find(c.dataset.id); logChange(d,'Inclus',lineInc(d)?'oui':'non',c.checked?'oui':'non'); L(d.id).inc=c.checked; ppiChanged(); }));
   el.querySelectorAll('input[data-k=q]').forEach(c=>c.addEventListener('change',()=>{ const o=L(c.dataset.id); o.q=o.q||{}; logChange(find(c.dataset.id),QS.find(q=>q[0]===c.dataset.q)[1],o.q[c.dataset.q]?'oui':'non',c.checked?'oui':'non'); o.q[c.dataset.q]=c.checked; ppiSave(); buildArb(); buildJournal(); }));
   el.querySelectorAll('select[data-k=cat]').forEach(sl=>sl.addEventListener('change',()=>{ setCat(find(sl.dataset.id),sl.value); ppiChanged(); }));
-  el.querySelectorAll('input[data-k=y]').forEach(i=>i.addEventListener('change',()=>{ const d=find(i.dataset.id); const o=L(d.id); o.y={...lineY(d)}; logChange(d,'Montant '+i.dataset.y,fmtE(o.y[i.dataset.y]||0),fmtE(parseE(i.value))); o.y[i.dataset.y]=parseE(i.value); o.date=today(); if(PPI.who) o.par=PPI.who; ppiChanged(); }));
+  el.querySelectorAll('input[data-k=y]').forEach(i=>{
+    // Montant d'origine mémorisé à la prise de focus (pour le journal) ; totaux rafraîchis pendant la frappe ;
+    // journal + enregistrement + reconstruction du tableau à la validation (Entrée ou clic ailleurs).
+    i.addEventListener('focus',()=>{ i.dataset.av=String(lineY(find(i.dataset.id))[i.dataset.y]||0); });
+    i.addEventListener('input',()=>{ const d=find(i.dataset.id); if(!d) return; if(i.dataset.av===undefined) i.dataset.av=String(lineY(d)[i.dataset.y]||0); /* valeur d'origine, même sans événement focus */ clearTimeout(PPI_LIVE_T); PPI_LIVE_T=setTimeout(()=>{ const o=L(d.id); o.y={...lineY(d)}; o.y[i.dataset.y]=parseE(i.value); ppiRefreshTotals(); },200); });
+    i.addEventListener('change',()=>{ clearTimeout(PPI_LIVE_T); const d=find(i.dataset.id); const o=L(d.id); const av=i.dataset.av!==undefined?+i.dataset.av:(lineY(d)[i.dataset.y]||0); delete i.dataset.av; o.y={...lineY(d)}; o.y[i.dataset.y]=parseE(i.value); logChange(d,'Montant '+i.dataset.y,fmtE(av),fmtE(o.y[i.dataset.y])); o.date=today(); if(PPI.who) o.par=PPI.who; ppiChanged(); });
+  });
   el.querySelectorAll('input[data-k=subT]').forEach(i=>i.addEventListener('change',()=>{ const d=find(i.dataset.id); const o=L(d.id); const tot=parseE(i.value); const cur=lineY(d); const base=yrs.slice(1).reduce((s,y)=>s+(cur[y]||0),0); const sub={}; yrs.forEach(y=>sub[y]= y==='2026'?0:(base>0?tot*(cur[y]||0)/base:0)); logChange(d,'Subvention attendue',fmtE(yrs.slice(1).reduce((s,y)=>s+(lineSub(d)[y]||0),0)),fmtE(tot)); o.sub=sub; ppiChanged(); }));
   el.querySelectorAll('input[data-k=com]').forEach(i=>i.addEventListener('change',()=>{ const o=L(i.dataset.id); logChange(find(i.dataset.id),'Commentaire',o.com||'',i.value); o.com=i.value; o.date=today(); ppiSave(); buildArb(); }));
   el.querySelectorAll('button[data-k=shift]').forEach(b=>b.addEventListener('click',()=>{ const d=find(b.dataset.id); const av=yl(lineY(d)); shiftLine(d,1); const o=L(d.id); logChange(d,'Décalé d\'un an',av,yl(lineY(d))+(o.apres?' · après 2033 : '+fmtE(o.apres):'')); o.date=today(); if(PPI.who) o.par=PPI.who; ppiChanged(); }));
   el.querySelectorAll('button[data-k=reset]').forEach(b=>b.addEventListener('click',()=>{ resetLine(find(b.dataset.id)); ppiChanged(); }));
   el.querySelectorAll('button[data-k=vu]').forEach(b=>b.addEventListener('click',()=>{ delete L(b.dataset.id).drf; ppiSave(); buildPPI(false); }));
-  const tot27=yrs.slice(1).reduce((s,y)=>s+prof[y],0);
+  ppiSumRefresh();
+}
+// Résumé au-dessus du tableau PPI (total coché, pic, subventions, compteurs).
+function ppiSumRefresh(){
+  const prof=projetProfile(); const tot27=yrs.slice(1).reduce((s,y)=>s+prof[y],0);
   const nd=allLines().filter(d=>lineTot(d)>0&&!hasQ(d,'devis')).length, ne=allLines().filter(d=>hasQ(d,'expl')).length, na=allLines().filter(d=>lineTot(d)>0&&!(PPI.lines[d.id]||{}).cat).length;
-  $('ppi_sum').innerHTML=`${fmtM(tot27)} cochés sur 2027-2033, ${fmtK(tot27/7)} par an en moyenne. Pic : ${fmtK(Math.max(...yrs.slice(1).map(y=>prof[y])))} en ${yrs.slice(1).reduce((a,y)=>prof[y]>prof[a]?y:a,'2027')}. Subventions attendues inscrites : ${fmtK(yrs.slice(1).reduce((s,y)=>s+projetSubv()[y],0))}.<br><span class="tag" style="font-size:13px">${allLines().length} lignes, ${shown} affichées · ${na} non arbitrées · ${nd} sans devis · ${ne} à expliquer par le service</span>`;
+  $('ppi_sum').innerHTML=`${fmtM(tot27)} cochés sur 2027-2033, ${fmtK(tot27/7)} par an en moyenne. Pic : ${fmtK(Math.max(...yrs.slice(1).map(y=>prof[y])))} en ${yrs.slice(1).reduce((a,y)=>prof[y]>prof[a]?y:a,'2027')}. Subventions attendues inscrites : ${fmtK(yrs.slice(1).reduce((s,y)=>s+projetSubv()[y],0))}.<br><span class="tag" style="font-size:13px">${allLines().length} lignes, ${PPI_SHOWN} affichées · ${na} non arbitrées · ${nd} sans devis · ${ne} à expliquer par le service</span>`;
+}
+// Rafraîchit les totaux du tableau PPI sans le reconstruire (pendant la frappe d'un montant) :
+// total de la ligne, total du groupe, ligne TOTAL, résumé. Le tableau complet est reconstruit à la validation.
+function ppiRefreshTotals(){
+  const el=$('ppitbl'); if(!el) return; const find=id=>PPI_DATA.dep.find(x=>x.id===id);
+  el.querySelectorAll('b[data-tot]').forEach(b=>{ const d=find(b.dataset.tot); if(d) b.textContent=fmtE(lineTot(d)); });
+  el.querySelectorAll('tr.grp[data-th]').forEach(tr=>{ const t=tr.dataset.th; const Lg=allLines().filter(passFlt).filter(d=>ppiGrpKey(d)===t); const gt=Lg.reduce((s,d)=>s+(lineInc(d)?lineTot(d):0),0); const tag=tr.querySelector('[data-grptot]'); if(tag) tag.textContent=`${Lg.length} lignes · ${fmtE(gt)} € cochés sur 2027-2033`; });
+  const prof=projetProfile(); const sv=projetSubv();
+  el.querySelectorAll('td[data-tot-y]').forEach(td=>{ const y=td.dataset.totY; td.textContent=fmtE(y==='tot'?yrs.slice(1).reduce((s,q)=>s+prof[q],0):y==='sub'?yrs.slice(1).reduce((s,q)=>s+sv[q],0):prof[y]); });
+  ppiSumRefresh();
 }
 
 function buildArb(){
@@ -1319,7 +1354,11 @@ function showDiff(){
 }
 function ppiImportFile(f,kind){ const rd=new FileReader(); rd.onload=()=>{ let msg='Import réussi.'; try{ const o=JSON.parse(rd.result);
     if(kind==='arb'){ if(o.ppi&&o.ppi.lines){ if(o.data&&o.data.dep) { Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,o.data); PPI_DATA.dep=sansTotaux(PPI_DATA.dep); ppiDataSave(); } PPI=o.ppi; delete PPI.small; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } else throw 0; }
-    else { if(o.dep&&o.years){ const r=applyNewPPI(o); msg=`PPI ${o.version} chargé : ${r.added.length} nouvelle(s), ${r.removed.length} disparue(s), ${r.changed.length} modifiée(s).`; } else throw 0; }
+    else {
+      // Dans l'application, le PPI de référence est chargé par l'administrateur seul (comme l'import Excel) :
+      // un élu qui chargerait un JSON ne le persisterait pas, mais ses marqueurs « modifié par la DRF » le seraient.
+      if(SIM.api&&SIM.role!=='ADMIN'){ $('ppi_msg').textContent='Chargement d\'un PPI réservé à l\'administrateur.'; setTimeout(()=>$('ppi_msg').textContent='',8000); return; }
+      if(o.dep&&o.years&&Array.isArray(o.dep)&&o.dep.length){ const r=applyNewPPI(o); msg=`PPI ${o.version} chargé : ${r.added.length} nouvelle(s), ${r.removed.length} disparue(s), ${r.changed.length} modifiée(s).`; } else throw 0; }
     $('ppi_version').textContent=PPI_DATA.version; ppiChanged(); showDiff(); $('ppi_msg').textContent=msg; }catch(e){ $('ppi_msg').textContent='Fichier non reconnu.'; } setTimeout(()=>$('ppi_msg').textContent='',6000); }; rd.readAsText(f); }
 // Import du PPI Excel (.xlsx) de la DRF, réservé admin : le fichier est envoyé à l'API
 // qui le convertit et l'écrit comme donnée de référence (ppi-donnees) en base. On
@@ -1373,7 +1412,8 @@ function ppiInit(){
   $('b_csv_serv').addEventListener('click',csvServices);
   $('f_arb_import').addEventListener('change',e=>{ if(e.target.files[0]) ppiImportFile(e.target.files[0],'arb'); e.target.value=''; });
   $('f_ppi_import').addEventListener('change',e=>{ if(e.target.files[0]) ppiImportFile(e.target.files[0],'ppi'); e.target.value=''; });
-  // Import .xlsx réservé admin (même règle que le chargement d'un PPI de référence).
+  // Import .xlsx réservé admin (même règle que le chargement d'un PPI de référence) ; le chargement JSON d'un PPI aussi.
+  if(SIM.api&&(SIM.role!=='ADMIN'||SIM.ro)){ const lab=$('f_ppi_import').closest('label'); if(lab) lab.style.display='none'; }
   if(SIM.api&&SIM.role==='ADMIN'&&!SIM.ro){ const w=$('ppi_xlsx_w'); if(w) w.style.display=''; const fx=$('f_ppi_xlsx'); if(fx) fx.addEventListener('change',e=>{ if(e.target.files[0]) ppiImportXlsx(e.target.files[0]); e.target.value=''; }); }
   let armed=false; const br=$('b_ppi_reset'); const brLab=br.textContent;
   br.addEventListener('click',()=>{ if(!armed){ armed=true; br.textContent='Confirmer : effacer tous les arbitrages ?'; br.style.background='#8a1f1f'; br.style.color='#fff'; $('ppi_msg').textContent='Cases, catégories, montants saisis et commentaires seront effacés. Sauvegarde d\'abord (JSON) si tu veux les garder. Recliquer pour confirmer.'; setTimeout(()=>{ if(armed){ armed=false; br.textContent=brLab; br.style.background=''; br.style.color=''; $('ppi_msg').textContent=''; } },6000); return; } armed=false; br.textContent=brLab; br.style.background=''; br.style.color=''; const keep=PPI.log||[], who=PPI.who; PPI={version:PPI_DATA.version,lines:{},cats:[...DEFCATS],lastDiff:null,log:keep,who}; logChange(null,'Remise à zéro','tous les arbitrages','PPI de la DRF '+PPI_DATA.version); ppiChanged(); showDiff(); $('ppi_msg').textContent='Arbitrages effacés. PPI de la DRF du '+PPI_DATA.version+' conservé.'; setTimeout(()=>$('ppi_msg').textContent='',4000); });
@@ -1407,7 +1447,9 @@ function ctxCharts(){ if(!$('g_ctx_ep')) return; const r0=calc(state)[0]; const 
   chart('g_ctx_rd',[{vals:rrf,col:'#1f6f4a',name:'recettes',labcol:'#1f6f4a'},{vals:drf,col:'#b23b3b',name:'dépenses',below:true,labcol:'#b23b3b',ptcol:v=>'#b23b3b'}],{...o,min:6000000,max:13000000});
   const des=eb.map((e,i)=>e>0?enc[i]/e:30);
   chart('g_ctx_des',[{vals:des,bars:true,colf:v=>v>12?'#b23b3b':v>8?'#d98a00':'#1f6f4a',fmt:v=>v.toFixed(1).replace('.',',')}],{...o,min:0,max:20,seuils:[{v:8,c:'#d98a00',l:'plafond interne 8 ans'},{v:12,c:'#b23b3b',l:'alerte 12 ans'}]}); }
-function ordres(){ const mx=maxInvest(state); const mi=maxInvest({...state,inf:state.inf+0.5}); const me=maxInvest({...state,e27:state.e27+100}); const fr=v=>v.toLocaleString('fr-FR',{maximumFractionDigits:1});
+function ordres(){ const mx=maxInvest(state); const mi=maxInvest({...state,inf:state.inf+0.5});
+  // +100 K€ d'effort : sur le curseur, ou sur chaque année saisie si l'effort est « saisi année par année » (sinon le curseur est ignoré et l'écart affiché vaut 0).
+  const me=state.effmode==='perso'?withPY({eff:PY.eff.map((v,j)=>j>0?(v||0)+100000:v)},()=>maxInvest(state)):maxInvest({...state,e27:state.e27+100}); const fr=v=>v.toLocaleString('fr-FR',{maximumFractionDigits:1});
   $('og_inf').textContent='Le réglage qui pèse le plus. '+((mx>0&&mi>0)?`Un demi-point de pente en plus (${fr(state.inf)} → ${fr(state.inf+0.5)} %) : ${(mx-mi).toLocaleString('fr-FR')} K€ d'investissement annuel en moins, ${mx.toLocaleString('fr-FR')} → ${mi.toLocaleString('fr-FR')} K€.`:(mx>0?`Un demi-point de pente en plus (${fr(state.inf)} → ${fr(state.inf+0.5)} %) et l'investissement passe sous 300 K€ par an.`:`L'investissement est déjà sous 300 K€ par an avec ces réglages.`));
   $('og_eff').textContent=me>0?(mx>0?`100 K€ d'économies pérennes en plus : ${(me-mx).toLocaleString('fr-FR')} K€ d'investissement annuel en plus, ${mx.toLocaleString('fr-FR')} → ${me.toLocaleString('fr-FR')} K€.`:`100 K€ d'économies pérennes en plus : l'investissement repasse de moins de 300 à ${me.toLocaleString('fr-FR')} K€ par an.`):`Avec ces réglages, 100 K€ d'économies en plus ne suffisent pas à repasser au-dessus de 300 K€ par an.`;
   ctxCharts(); }
@@ -1415,7 +1457,7 @@ const _render0=render; render=function(){ _render0(); ordres(); simSave(); };
 window.addEventListener('beforeunload',()=>{ if(SIM.api){ for(const cle of Object.keys(SAVE_T)){ if(SAVE_T[cle]){ clearTimeout(SAVE_T[cle]); SAVE_T[cle]=null; const contenu=cle==='ppi-arbitrages'?PPI:cle==='ppi-donnees'?PPI_DATA:simSnapshot(); try{ navigator.sendBeacon&&fetch(SIM.api+'/'+cle,{method:'PUT',credentials:'same-origin',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({contenu,version:VER[cle]||0})}); }catch(e){} } } return; } clearTimeout(simTimer); try{ localStorage.setItem(SIMKEY,JSON.stringify(simSnapshot())); }catch(e){} });
 const _buildComp0=buildComp; buildComp=function(){ _buildComp0(); simSave(); };
 
-$('b_sim_reset').addEventListener('click',()=>{ try{ localStorage.removeItem(SIMKEY); }catch(e){} P={...DEF}; COMP.length=0; state.m012=[]; buildParams(); buildComp(); applyScen('sc_d',SCEN.sc_d); buildM012(); $('sim_restored').textContent=''; $('sim_reset_w').style.display='none'; });
+$('b_sim_reset').addEventListener('click',()=>{ try{ localStorage.removeItem(SIMKEY); }catch(e){} P={...DEF}; COMP.length=0; state.m012=[]; PY.cessBase=Y.map(()=>6000); buildParams(); buildComp(); applyScen('sc_d',SCEN.sc_d); buildM012(); $('sim_restored').textContent=''; $('sim_reset_w').style.display='none'; });
 $('b_m012_add').addEventListener('click',()=>{ state.m012=state.m012||[]; state.m012.push({lab:'',amt:0,m:1,y:2027}); buildM012(); });
 $('b_m012_ex').addEventListener('click',()=>{ state.m012=[{lab:'Poste non renouvelé n° 1',amt:45000,m:1,y:2027},{lab:'Poste non renouvelé n° 2',amt:45000,m:1,y:2027},{lab:'Poste non renouvelé n° 3',amt:45000,m:7,y:2027}]; buildM012(); clearScen(); render(); });
 function boot(){ ppiInit(); buildParams(); if(!simRestore()) applyScen('sc_d',SCEN.sc_d); buildM012(); simbarBuild(); }
