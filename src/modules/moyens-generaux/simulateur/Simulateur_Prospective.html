@@ -1120,10 +1120,16 @@ async function flushSave(cle){ if(!SAVE_T[cle]) return; clearTimeout(SAVE_T[cle]
 function ppiSave(){ if(SIM.api){ apiPut('ppi-arbitrages',PPI); return; } try{ localStorage.setItem('seyssins_ppi_v8',JSON.stringify(PPI)); }catch(e){} }
 let SIM_SKIP_PPIDATA_SAVE=false;   // vrai pendant l'application d'un import .xlsx (l'API a déjà écrit la base)
 function ppiDataSave(){ if(SIM_SKIP_PPIDATA_SAVE) return; if(SIM.api){ if(SIM.role==='ADMIN') apiPut('ppi-donnees',PPI_DATA); return; } try{ localStorage.setItem('seyssins_ppidata_v8',JSON.stringify(PPI_DATA)); }catch(e){} }
+// Lignes de total / récapitulatif d'un tableau Excel (ex. « TOTAL GENERAL PAR ANNEE : ») :
+// sans lieu, « total » dans la désignation. Un PPI importé avant le correctif du convertisseur
+// (ou un ancien JSON) peut en contenir une : elle doublerait tous les montants. Les vraies
+// dépenses ont toujours un lieu, donc ce filtre n'écarte aucun projet.
+function estLigneTotal(d){ return !String(d.lieu||'').trim()&&/\b(sous[- ]?)?tota(l|ux)\b|récapitulatif|general par/i.test(String(d.des||'')); }
+function sansTotaux(dep){ return (dep||[]).filter(d=>!estLigneTotal(d)); }
 function ppiLoad(){
-  if(SIM.api){ const a=REMOTE['ppi-arbitrages']; if(a&&a.contenu&&a.contenu.lines){ PPI={...PPI,...a.contenu}; delete PPI.small; PPI.log=PPI.log||[]; PPI.who=PPI.who||''; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } const d=REMOTE['ppi-donnees']; if(d&&d.contenu&&d.contenu.dep&&d.contenu.years){ Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,d.contenu); } if(!PPI.who&&SIM.user) PPI.who=SIM.user; return; }
+  if(SIM.api){ const a=REMOTE['ppi-arbitrages']; if(a&&a.contenu&&a.contenu.lines){ PPI={...PPI,...a.contenu}; delete PPI.small; PPI.log=PPI.log||[]; PPI.who=PPI.who||''; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } const d=REMOTE['ppi-donnees']; if(d&&d.contenu&&d.contenu.dep&&d.contenu.years){ Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,d.contenu); PPI_DATA.dep=sansTotaux(PPI_DATA.dep); } if(!PPI.who&&SIM.user) PPI.who=SIM.user; return; }
   try{ const s=localStorage.getItem('seyssins_ppi_v8')||localStorage.getItem('seyssins_ppi_v7'); if(s){ const o=JSON.parse(s); if(o&&o.lines){ PPI={...PPI,...o}; delete PPI.small; PPI.log=PPI.log||[]; PPI.who=PPI.who||''; PPI.cats=o.cats&&o.cats.length?o.cats:[...DEFCATS]; } } }catch(e){}
-  try{ const d=localStorage.getItem('seyssins_ppidata_v8'); if(d){ const o=JSON.parse(d); if(o&&o.dep&&o.years) Object.assign(PPI_DATA,o); } }catch(e){}
+  try{ const d=localStorage.getItem('seyssins_ppidata_v8'); if(d){ const o=JSON.parse(d); if(o&&o.dep&&o.years){ Object.assign(PPI_DATA,o); PPI_DATA.dep=sansTotaux(PPI_DATA.dep); } } }catch(e){}
 }
 const yrs=PPI_DATA.years; // ['2026',...,'2033']
 function L(id){ if(!PPI.lines[id]) PPI.lines[id]={}; return PPI.lines[id]; }
@@ -1294,6 +1300,7 @@ function csvServices(){
 
 // ---------- import, avec comparaison ----------
 function applyNewPPI(o){
+  o={...o,dep:sansTotaux(o.dep)};   // un PPI chargé (JSON ou Excel) ne doit jamais apporter de ligne de total
   const old={}; PPI_DATA.dep.forEach(d=>old[d.id]=d);
   const neu={}; o.dep.forEach(d=>neu[d.id]=d);
   const added=o.dep.filter(d=>!old[d.id]); const removed=PPI_DATA.dep.filter(d=>!neu[d.id]); const changed=[];
@@ -1311,7 +1318,7 @@ function showDiff(){
     <p><b>Nouvelles lignes</b> (à arbitrer)</p>${li(r.added)}<p><b>Lignes disparues du fichier DRF</b></p>${li(r.removed)}<p><b>Lignes modifiées par la DRF</b> (repérées dans le tableau, bouton « vu » pour lever le repère)</p>${li(r.changed)}</details>`;
 }
 function ppiImportFile(f,kind){ const rd=new FileReader(); rd.onload=()=>{ let msg='Import réussi.'; try{ const o=JSON.parse(rd.result);
-    if(kind==='arb'){ if(o.ppi&&o.ppi.lines){ if(o.data&&o.data.dep) { Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,o.data); ppiDataSave(); } PPI=o.ppi; delete PPI.small; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } else throw 0; }
+    if(kind==='arb'){ if(o.ppi&&o.ppi.lines){ if(o.data&&o.data.dep) { Object.keys(PPI_DATA).forEach(k=>delete PPI_DATA[k]); Object.assign(PPI_DATA,o.data); PPI_DATA.dep=sansTotaux(PPI_DATA.dep); ppiDataSave(); } PPI=o.ppi; delete PPI.small; PPI.cats=PPI.cats&&PPI.cats.length?PPI.cats:[...DEFCATS]; } else throw 0; }
     else { if(o.dep&&o.years){ const r=applyNewPPI(o); msg=`PPI ${o.version} chargé : ${r.added.length} nouvelle(s), ${r.removed.length} disparue(s), ${r.changed.length} modifiée(s).`; } else throw 0; }
     $('ppi_version').textContent=PPI_DATA.version; ppiChanged(); showDiff(); $('ppi_msg').textContent=msg; }catch(e){ $('ppi_msg').textContent='Fichier non reconnu.'; } setTimeout(()=>$('ppi_msg').textContent='',6000); }; rd.readAsText(f); }
 // Import du PPI Excel (.xlsx) de la DRF, réservé admin : le fichier est envoyé à l'API
