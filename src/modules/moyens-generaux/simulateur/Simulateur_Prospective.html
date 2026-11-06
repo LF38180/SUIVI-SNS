@@ -1149,7 +1149,15 @@ function drfComs(d){ const c=d.coms||(d.com?{'2027':d.com}:{}); return Object.ke
 function hasQ(d,k){ const o=PPI.lines[d.id]; return !!(o&&o.q&&o.q[k]); }
 
 // ---------- filtres ----------
-const FLT={txt:'',th:'',gest:'',only:''};
+const FLT={txt:'',th:'',gest:'',only:'',tri:''};
+// Tri du tableau PPI. '' = regroupé par thématique (comportement d'origine) ; les autres
+// options affichent une liste unique triée par montant, toutes thématiques confondues.
+const TRIS={
+  '':['Tri par thématique',(a,b)=>lineTot(b)-lineTot(a)],
+  tot_desc:['Montant 2027-2033, du plus élevé',(a,b)=>lineTot(b)-lineTot(a)],
+  tot_asc:['Montant 2027-2033, du plus faible',(a,b)=>lineTot(a)-lineTot(b)],
+  y27_desc:['Montant 2027, du plus élevé',(a,b)=>(lineY(b)['2027']||0)-(lineY(a)['2027']||0)||lineTot(b)-lineTot(a)],
+};
 let COMS_OPEN=true;
 function passFlt(d){
   if(FLT.th&&d.th!==FLT.th) return false;
@@ -1170,7 +1178,9 @@ function buildFilters(){
     <select id="f_th" aria-label="Thématique"><option value="">Toutes les thématiques</option>${ths.map(t=>`<option ${FLT.th===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
     <select id="f_gest" aria-label="Gestionnaire"><option value="">Tous les gestionnaires</option>${gs.map(t=>`<option ${FLT.gest===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
     <select id="f_only" aria-label="Afficher seulement"><option value="">Toutes les lignes</option><option value="sansdevis" ${FLT.only==='sansdevis'?'selected':''}>Sans devis</option><option value="expl" ${FLT.only==='expl'?'selected':''}>À expliquer par le service</option><option value="nonarb" ${FLT.only==='nonarb'?'selected':''}>Non arbitrées</option><option value="exclus" ${FLT.only==='exclus'?'selected':''}>Décochées</option><option value="drf" ${FLT.only==='drf'?'selected':''}>Modifiées par la DRF</option></select>
+    <select id="f_tri" aria-label="Trier">${Object.entries(TRIS).map(([k,[lab]])=>`<option value="${k}" ${FLT.tri===k?'selected':''}>${esc(lab)}</option>`).join('')}</select>
     <button type="button" class="mini" id="b_coms">${COMS_OPEN?'Masquer':'Afficher'} les commentaires DRF</button>`;
+  $('f_tri').addEventListener('change',e=>{FLT.tri=e.target.value; buildPPI(false);});
   $('f_txt').addEventListener('input',e=>{FLT.txt=e.target.value; buildPPI(false);});
   $('f_th').addEventListener('change',e=>{FLT.th=e.target.value; buildPPI(false);});
   $('f_gest').addEventListener('change',e=>{FLT.gest=e.target.value; buildPPI(false);});
@@ -1184,12 +1194,14 @@ function buildPPI(rebuildFlt=true){
   const prof=projetProfile();
   const NC=yrs.length+11;
   const th=`<tr><th style="min-width:30px">Inclus</th><th style="min-width:320px">Projet · commentaires DRF</th><th>Gest.</th><th title="Devis daté de moins de 12 mois">Devis</th><th title="Besoin d'explication du service">À expl.</th><th>Arbitrage</th>${yrs.map(y=>`<th>${y}</th>`).join('')}<th>Total 27-33</th><th>Après 2033</th><th>Subv. attendue</th><th style="min-width:200px">Mon commentaire</th><th></th></tr>`;
-  const grp={}; let shown=0; allLines().filter(passFlt).forEach(d=>{(grp[d.th]=grp[d.th]||[]).push(d); shown++;});
+  const [triLab,triCmp]=TRIS[FLT.tri]||TRIS[''];
+  const grpKey=d=>FLT.tri?'Toutes thématiques · '+triLab.toLowerCase():d.th;
+  const grp={}; let shown=0; allLines().filter(passFlt).forEach(d=>{const k=grpKey(d); (grp[k]=grp[k]||[]).push(d); shown++;});
   let h=th;
   Object.keys(grp).sort().forEach(t=>{
     const gt=grp[t].reduce((s,d)=>s+(lineInc(d)?lineTot(d):0),0);
     h+=`<tr class="grp"><td colspan="${NC}"><span class="grpbtn" style="cursor:default">${esc(t)}<span class="tag">${grp[t].length} lignes · ${fmtE(gt)} € cochés sur 2027-2033</span></span></td></tr>`;
-    grp[t].sort((a,b)=>lineTot(b)-lineTot(a)).forEach(d=>{
+    grp[t].sort(triCmp).forEach(d=>{
       const o=PPI.lines[d.id]||{}; const cur=lineY(d); const inc=lineInc(d); const tot=lineTot(d); const sub=lineSub(d); const subT=yrs.slice(1).reduce((s,y)=>s+(sub[y]||0),0);
       const coms=COMS_OPEN?drfComs(d):'';
       const drf=o.drf?`<div class="drfmod">Modifié par la DRF (${esc(o.drf.version)}) : ${o.drf.note} <button type="button" class="mini" data-id="${d.id}" data-k="vu">vu</button></div>`:'';
