@@ -4,6 +4,7 @@ import './globals.css'
 import { Nav } from '@/components/Nav'
 import { RappelMdp } from '@/components/RappelMdp'
 import { Aide } from '@/components/Aide'
+import { PiedVersion } from '@/components/PiedVersion'
 
 // Police auto-hébergée (pas de dépendance Google à l'exécution, pas de fuite IP RGPD,
 // font-display swap → texte lisible vite sur 4G). Graisses réellement utilisées.
@@ -39,6 +40,7 @@ export default function RootLayout({
         <Nav />
         <RappelMdp />
         <main id="contenu">{children}</main>
+        <PiedVersion />
         <Aide />
       </body>
     </html>
