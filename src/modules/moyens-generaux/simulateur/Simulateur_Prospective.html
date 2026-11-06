@@ -1130,10 +1130,10 @@ function L(id){ if(!PPI.lines[id]) PPI.lines[id]={}; return PPI.lines[id]; }
 function lineY(d){ const o=PPI.lines[d.id]; return (o&&o.y)?o.y:d.y; }
 function lineInc(d){ const o=PPI.lines[d.id]; return !(o&&o.inc===false); }
 function lineTot(d){ const cur=lineY(d); return yrs.slice(1).reduce((s,y)=>s+(cur[y]||0),0); }
-function lineSub(d){ const o=PPI.lines[d.id]; if(o&&o.sub) return o.sub; const first=PPI_DATA.dep.find(x=>x.lieu===d.lieu); if(first!==d) return {}; const r=PPI_DATA.rec.find(x=>x.lieu===d.lieu); return r?r.y:{}; }
+function lineSub(d){ const o=PPI.lines[d.id]; if(o&&o.sub) return o.sub; const first=PPI_DATA.dep.find(x=>x.lieu===d.lieu); if(first!==d) return {}; const r=(PPI_DATA.rec||[]).find(x=>x.lieu===d.lieu); return r?r.y:{}; }
 function allLines(){ return PPI_DATA.dep; }
 function projetProfile(){ const t={}; yrs.forEach(y=>t[y]=0); allLines().forEach(d=>{ if(lineInc(d)) yrs.forEach(y=>t[y]+=lineY(d)[y]||0); }); return t; }
-function projetSubv(){ const t={}; yrs.forEach(y=>t[y]=0); allLines().forEach(d=>{ if(lineInc(d)) yrs.forEach(y=>t[y]+=(lineSub(d)[y]||0)); }); PPI_DATA.rec.forEach(r=>{ if(!PPI_DATA.dep.some(d=>d.lieu===r.lieu)) yrs.forEach(y=>t[y]+=r.y[y]||0); }); return t; }
+function projetSubv(){ const t={}; yrs.forEach(y=>t[y]=0); allLines().forEach(d=>{ if(lineInc(d)) yrs.forEach(y=>t[y]+=(lineSub(d)[y]||0)); }); (PPI_DATA.rec||[]).forEach(r=>{ if(!PPI_DATA.dep.some(d=>d.lieu===r.lieu)) yrs.forEach(y=>t[y]+=r.y[y]||0); }); return t; }
 function shiftLine(d,delta){ const cur=lineY(d); const ny={}; yrs.forEach(y=>ny[y]=0); let apres=0; yrs.forEach((y,i)=>{ if(y==='2026'){ny[y]=cur[y]||0;return;} const v=cur[y]||0; if(!v) return; const j=i+delta; if(j>=1&&j<yrs.length) ny[yrs[j]]+=v; else if(j>=yrs.length) apres+=v; else ny['2027']+=v; }); const o=L(d.id); o.y=ny; o.apres=(o.apres||0)+apres; }
 function firstYear(d){ const cur=lineY(d); return yrs.slice(1).find(y=>cur[y]>0)||null; }
 const today=()=>new Date().toISOString().slice(0,10);

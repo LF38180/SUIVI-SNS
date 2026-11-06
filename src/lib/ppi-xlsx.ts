@@ -194,6 +194,10 @@ export function convertirXlsx(buf: Buffer, version: string, refPPI: PpiConverti 
     const des = (cells.get('D') ?? '').trim()
     if (!lieu && !des) continue
     if ((cells.get('K') ?? '').trim().toUpperCase() === 'REC') continue // recettes exclues
+    // Lignes de total / récapitulatif du tableau Excel (ex. « TOTAL GENERAL PAR ANNEE : ») :
+    // elles n'ont pas de lieu et portent « total » dans la désignation. Les vraies dépenses
+    // ont toujours un lieu, donc ce test n'écarte aucune ligne de projet.
+    if (!lieu && /\b(sous[- ]?)?tota(l|ux)\b|récapitulatif|general par/i.test(des)) continue
 
     const y: Record<string, number> = {}
     const coms: Record<string, string> = {}
