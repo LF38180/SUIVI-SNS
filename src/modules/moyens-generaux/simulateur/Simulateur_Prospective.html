@@ -55,9 +55,13 @@
   #tab-detail section, #tab-lettre section, #tab-hyp section, #tab-accueil section{margin-bottom:16px;}
   .why{font-size:13px; color:var(--gris); margin:-6px 0 12px;}
   .slider{margin-bottom:12px;}
-  .slider .top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:15px; margin-bottom:4px; display:flex;}
+  .slider .top{display:flex; justify-content:flex-start; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:15px; margin-bottom:4px; display:flex;}
   .slider .top b{font-weight:600;}
-  .slider .top .num{font-weight:700; color:var(--vert); font-size:14px;}
+  .slider .top .num{font-weight:700; color:var(--vert); font-size:14px; margin-left:auto;}
+  .slider .direct{display:inline-flex; align-items:center; gap:4px;}
+  .slider .direct input{width:88px; text-align:right; font:inherit; font-family:'JetBrains Mono',ui-monospace,Consolas,monospace; font-size:13px; border:1px solid var(--ligne); border-radius:6px; padding:3px 7px; min-height:30px; background:#FFF4D6;}
+  .slider .direct input:focus-visible{outline:2px solid var(--bleu); outline-offset:1px;}
+  .slider .direct em{font-style:normal; font-size:12px; color:var(--gris);}
   input[type=range]{width:100%; accent-color:var(--vert); height:28px;}
   input[type=range]:focus-visible{outline:2px solid var(--bleu); outline-offset:2px;}
   .hint{font-size:13px; color:var(--gris); margin:-6px 0 12px; line-height:1.45;}
@@ -1021,7 +1025,7 @@ function buildM012(){ const el=$('m012tbl'); if(!el) return; const L=state.m012|
 // Curseur « PPI total » borné au total du fichier DRF chargé ; la valeur en cours est ramenée dans la plage si besoin.
 function ppiSliderSync(){ const s=$('s_ppi'); if(!s) return; const mx=profK(); if(mx>0){ s.max=mx; if(state.ppi>mx) state.ppi=mx; if(+s.min>mx) s.min=mx; } s.value=state.ppi; const v=$('ppi_ver_sl'); if(v) v.textContent=PPI_DATA.version; }
 function syncAll(){
-  syncs.forEach(f=>f()); ppiSliderSync();
+  syncs.forEach(f=>f()); ppiSliderSync(); slnSync();
   $('w_lisse').style.display=state.mode==='lisse'?'':'none';
   $('w_ppi').style.display=state.mode==='profil'?'':'none';
   $('h_perso').style.display=state.mode==='perso'?'':'none';
@@ -1036,8 +1040,33 @@ function clearScen(){document.querySelectorAll('.scen button').forEach(b=>b.clas
 
 document.querySelectorAll('nav [role=tab]').forEach(b=>{ b.addEventListener('click',()=>{ document.querySelectorAll('nav [role=tab]').forEach(x=>x.setAttribute('aria-selected','false')); b.setAttribute('aria-selected','true'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on')); $('tab-'+b.dataset.tab).classList.add('on'); }); });
 
+function setSlider(key,v){ state[key]=v; if(key==='e27'||key==='ryt') state.effmode='curseur'; if(key==='cessM'||key==='cessY') applyCess(); syncAll(); clearScen(); render(); }
 [['s_e27','e27'],['s_ryt','ryt'],['s_em26','em26'],['s_sub','sub'],['s_subp','subp'],['s_ppi','ppi'],['s_lisse','lisse'],['s_inf','inf'],['s_cessM','cessM'],['s_cessY','cessY']].forEach(([id,key])=>{
-  $(id).addEventListener('input',e=>{state[key]=parseFloat(e.target.value); if(key==='e27'||key==='ryt') state.effmode='curseur'; if(key==='cessM'||key==='cessY') applyCess(); syncAll(); clearScen(); render();});
+  $(id).addEventListener('input',e=>setSlider(key,parseFloat(e.target.value)));
+});
+// Saisie directe à côté de chaque curseur : même unité que le curseur (K€, %, année), Entrée ou clic ailleurs valide.
+// Une valeur hors de la plage du curseur mais dans les bornes `lo`/`hi` étend le curseur ; au-delà, elle est ramenée à la borne.
+// Le PPI total reste borné par le fichier DRF chargé (ppiSliderSync), l'année de cession par la période.
+const SLN={inf:{u:'%/an',dec:1,lo:0,hi:10},e27:{u:'K€',lo:0,hi:3000},ryt:{u:'K€/an',lo:0,hi:1000},em26:{u:'K€',lo:0,hi:5000},sub:{u:'K€/an',lo:0,hi:3000},subp:{u:'%',lo:0,hi:100},ppi:{u:'K€',lo:0,hi:()=>profK()||+$('s_ppi').max},lisse:{u:'K€/an',lo:0,hi:10000},cessM:{u:'K€',lo:0,hi:20000},cessY:{u:'',lo:2027,hi:2033,dec:0,brut:true}};
+function slnFmt(key,v){ const m=SLN[key]; return m.brut?String(v):v.toLocaleString('fr-FR',{maximumFractionDigits:m.dec??0}); }
+function slnSync(){ for(const key of Object.keys(SLN)){ const n=$('n_'+key); if(n&&document.activeElement!==n) n.value=slnFmt(key,state[key]); } }
+Object.keys(SLN).forEach(key=>{
+  const s=$('s_'+key), top=s&&s.closest('.slider')?.querySelector('.top'); if(!top) return;
+  const m=SLN[key], w=document.createElement('span'); w.className='direct';
+  const n=document.createElement('input'); n.type='text'; n.inputMode='decimal'; n.id='n_'+key; n.title='Saisie directe · Entrée pour valider';
+  n.setAttribute('aria-label',(s.getAttribute('aria-label')||key)+', saisie directe');
+  w.appendChild(n); if(m.u){ const u=document.createElement('em'); u.textContent=m.u; w.appendChild(u); }
+  top.appendChild(w);
+  n.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); n.blur(); } });
+  n.addEventListener('change',()=>{
+    const raw=String(n.value).replace(/\s/g,'').replace(',','.');
+    let v=raw===''?NaN:Number(raw);
+    if(!isFinite(v)){ n.value=slnFmt(key,state[key]); return; }
+    const hi=typeof m.hi==='function'?m.hi():m.hi;
+    const dec=m.dec??0; v=Math.round(Math.min(hi,Math.max(m.lo,v))*10**dec)/10**dec;
+    if(v<+s.min) s.min=v; if(v>+s.max) s.max=v; s.value=v;
+    setSlider(key,v); n.value=slnFmt(key,state[key]); // valeur retenue (bornée) toujours affichée, même si le champ a encore le focus
+  });
 });
 
 // Un scénario peut demander ppi:'max' = tout le PPI du fichier DRF chargé (valeur calculée au moment de l'application).
